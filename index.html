@@ -3358,7 +3358,6 @@ function deleteWord(idx) {
 
 // ── TRANSLATOR ──
 let trSentence = '';
-let trBusy = false;
 let trDirection = 'lat2eng';
 
 function setTrDirection(dir) {
@@ -3380,554 +3379,453 @@ function openTranslator() {
   document.getElementById('trOverlay').classList.add('open');
   document.getElementById('trSentenceInput').focus();
 }
-
 function closeTranslator() {
   document.getElementById('trOverlay').classList.remove('open');
 }
-
 document.getElementById('trOverlay').addEventListener('click', e => {
   if (e.target === document.getElementById('trOverlay')) closeTranslator();
 });
 
-// ══════════════════════════════════════════════
-// SCRIPTED COACHING ENGINE — no AI required
-// ══════════════════════════════════════════════
+// ================================================================
+//  SCRIPTED TRANSLATION COACH  —  no API calls required
+// ================================================================
 
-// Coaching state
-let coach = {
-  step: 0,          // current step index in the coaching sequence
-  steps: [],        // array of step objects
-  attempts: 0,      // failed attempts at current step
-  sentence: '',
-  tokens: [],       // words from the sentence
-  analysis: {}      // what we've found so far: verb, subject, object, etc.
+// ── Person labels ──────────────────────────────────────────────
+const PERSON_LABEL = {
+  s1:'1st person singular (I)',
+  s2:'2nd person singular (you)',
+  s3:'3rd person singular (he / she / it)',
+  p1:'1st person plural (we)',
+  p2:'2nd person plural (you all)',
+  p3:'3rd person plural (they)',
 };
 
-// Verb ending tables (present tense active, all conjugations)
-const VERB_ENDINGS_PRES = {
-  '1': { s1:'o', s2:'as', s3:'at', p1:'amus', p2:'atis', p3:'ant' },
-  '2': { s1:'eo', s2:'es', s3:'et', p1:'emus', p2:'etis', p3:'ent' },
-  '3': { s1:'o', s2:'is', s3:'it', p1:'imus', p2:'itis', p3:'unt' },
-  '4': { s1:'io', s2:'is', s3:'it', p1:'imus', p2:'itis', p3:'iunt' },
-  '5': { s1:'io', s2:'is', s3:'it', p1:'imus', p2:'itis', p3:'iunt' },
-  'irr':{ s1:'sum|possum|eo|volo|nolo|fero|adsum|absum', s2:'es', s3:'est|potest|it|vult|non vult|fert|adest|abest', p1:'sumus', p2:'estis', p3:'sunt|possunt|eunt|volunt|nolunt|ferunt' }
+// ── Irregular present-tense forms → person code ───────────────
+const IRR_FORMS = {
+  sum:'s1', es:'s2', est:'s3', sumus:'p1', estis:'p2', sunt:'p3',
+  adsum:'s1', ades:'s2', adest:'s3', adsumus:'p1', adestis:'p2', adsunt:'p3',
+  absum:'s1', abes:'s2', abest:'s3', absumus:'p1', abestis:'p2', absunt:'p3',
+  possum:'s1', potes:'s2', potest:'s3', possumus:'p1', potestis:'p2', possunt:'p3',
+  eo:'s1', it:'s3', imus:'p1', eunt:'p3',
+  volo:'s1', vis:'s2', vult:'s3', volumus:'p1', vultis:'p2', volunt:'p3',
+  nolo:'s1', nolumus:'p1', nolunt:'p3',
+  fero:'s1', fers:'s2', fert:'s3', ferimus:'p1', fertis:'p2', ferunt:'p3',
 };
 
-const PERSON_LABELS = {
-  s1: '1st person singular (I)',
-  s2: '2nd person singular (you)',
-  s3: '3rd person singular (he/she/it)',
-  p1: '1st person plural (we)',
-  p2: '2nd person plural (you all)',
-  p3: '3rd person plural (they)'
-};
+// ── Verb ending table — longest endings first ─────────────────
+// Each entry: { end, code, conj }
+const VERB_ENDINGS = [
+  { end:'amus', code:'p1', conj:1 }, { end:'atis', code:'p2', conj:1 },
+  { end:'emus', code:'p1', conj:2 }, { end:'etis', code:'p2', conj:2 },
+  { end:'imus', code:'p1', conj:3 }, { end:'itis', code:'p2', conj:3 },
+  { end:'iunt', code:'p3', conj:4 },
+  { end:'ant',  code:'p3', conj:1 }, { end:'ent',  code:'p3', conj:2 },
+  { end:'unt',  code:'p3', conj:3 },
+  { end:'as',   code:'s2', conj:1 }, { end:'es',   code:'s2', conj:2 },
+  { end:'at',   code:'s3', conj:1 }, { end:'et',   code:'s3', conj:2 },
+  { end:'it',   code:'s3', conj:3 },
+  { end:'eo',   code:'s1', conj:2 }, { end:'io',   code:'s1', conj:4 },
+  { end:'o',    code:'s1', conj:1 },
+];
 
-// Noun case ending hints (1st & 2nd decl — the most common L1 cases)
-const CASE_ENDINGS = {
-  nominative: 'the subject — who/what is doing the action. Endings like -a, -us, -er, -um.',
-  accusative: 'the direct object — who/what receives the action. Endings like -am, -um, -os, -as.',
-  genitive:   'possession (of …). Endings like -ae, -i, -orum, -arum.',
-  dative:     'indirect object (to/for …). Endings like -ae, -o.',
-  ablative:   'used after many prepositions (in, cum, a/ab, e/ex, de). Endings like -a, -o, -is.',
-  vocative:   'direct address. Usually same as nominative.'
-};
-
-// Simple token analysis — classify each word using vocab array
-function analyseTokens(words) {
-  const results = [];
-  for (const raw of words) {
-    const w = raw.toLowerCase().replace(/[.,!?;:]/g, '');
-    if (!w) continue;
-    // Look up in vocab
-    const match = vocab.find(v =>
-      v.latin.toLowerCase() === w ||
-      v.latin.toLowerCase().split(',')[0].trim() === w ||
-      v.latin.toLowerCase().split('/')[0].trim() === w
-    );
-    results.push({ raw, word: w, vocab: match || null });
-  }
-  return results;
+// ── Morphology helpers ─────────────────────────────────────────
+function stripPunct(w) {
+  return w.toLowerCase().replace(/[.,!?;:"""]/g, '').trim();
 }
 
-// Detect if a word looks like a verb (has a recognisable conjugated ending)
-function detectVerbEnding(word) {
-  const w = word.toLowerCase().replace(/[.,!?;:]/g, '');
-  // Check all person/number endings
-  const allEndings = ['ant', 'unt', 'iunt', 'ent', 'at', 'et', 'it', 'amus', 'emus', 'imus', 'atis', 'etis', 'itis', 'as', 'es', 'is', 'o', 'eo', 'io'];
-  const personMap = {
-    'ant':'3rd plural (verb 1)', 'unt':'3rd plural (verb 3)', 'iunt':'3rd plural (verb 4/5)',
-    'ent':'3rd plural (verb 2)', 'at':'3rd singular (verb 1)', 'et':'3rd singular (verb 2)',
-    'it':'3rd singular (verb 3/4)', 'amus':'1st plural (verb 1)', 'emus':'1st plural (verb 2)',
-    'imus':'1st plural (verb 3/4)', 'atis':'2nd plural (verb 1)', 'etis':'2nd plural (verb 2)',
-    'itis':'2nd plural (verb 3/4)', 'as':'2nd singular (verb 1)', 'es':'2nd singular (verb 2)',
-    'is':'2nd singular (verb 3/4)'
+function lookupWord(raw) {
+  const w = stripPunct(raw);
+  return vocab.find(v => {
+    const forms = v.latin.toLowerCase().split(/[,/ ]+/).map(s => s.trim()).filter(Boolean);
+    return forms.some(f => f === w);
+  }) || null;
+}
+
+function detectVerb(raw) {
+  const w = stripPunct(raw);
+  if (!w) return null;
+  if (IRR_FORMS[w]) {
+    const code = IRR_FORMS[w];
+    return { person: code, label: PERSON_LABEL[code], ending: w, conj: 'irr' };
+  }
+  for (const { end, code, conj } of VERB_ENDINGS) {
+    if (w.endsWith(end) && w.length > end.length + 1) {
+      return { person: code, label: PERSON_LABEL[code], ending: end, conj };
+    }
+  }
+  return null;
+}
+
+function detectCase(raw) {
+  const w = stripPunct(raw);
+  if (!w) return null;
+  // Check accusative first — more distinctive endings
+  if (w.endsWith('am') && w.length > 2) return { case:'accusative', number:'singular', note:'1st decl. acc. sing. (-am)' };
+  if (w.endsWith('em') && w.length > 2) return { case:'accusative', number:'singular', note:'3rd decl. acc. sing. (-em)' };
+  if (w.endsWith('os') && w.length > 2) return { case:'accusative', number:'plural',   note:'2nd decl. acc. pl. (-os)' };
+  if (w.endsWith('um') && w.length > 2) return { case:'accusative', number:'singular', note:'2nd decl. acc. sing. (-um)' };
+  if (w.endsWith('as') && w.length > 2) return { case:'accusative', number:'plural',   note:'1st decl. acc. pl. (-as)' };
+  // Then nominative
+  if (w.endsWith('ae') && w.length > 2) return { case:'nominative', number:'plural',   note:'1st decl. nom. pl. (-ae)' };
+  if (w.endsWith('us') && w.length > 2) return { case:'nominative', number:'singular', note:'2nd decl. nom. sing. (-us)' };
+  if (w.endsWith('er') && w.length > 2) return { case:'nominative', number:'singular', note:'2nd decl. nom. sing. (-er)' };
+  if (w.endsWith('i')  && w.length > 2) return { case:'nominative', number:'plural',   note:'2nd decl. nom. pl. (-i)' };
+  if (w.endsWith('a')  && w.length > 1) return { case:'nominative', number:'singular', note:'1st decl. nom. sing. (-a)' };
+  if (w.endsWith('es') && w.length > 2) return { case:'nominative', number:'plural',   note:'3rd decl. nom./acc. pl. (-es)' };
+  return null;
+}
+
+function parseSentence(sentence) {
+  const words = sentence.trim().split(/\s+/).map(raw => {
+    const verb   = detectVerb(raw);
+    const caseI  = verb ? null : detectCase(raw);
+    const vocabE = lookupWord(raw);
+    return { raw, word: stripPunct(raw), verb, caseInfo: caseI, vocab: vocabE };
+  });
+  return {
+    words,
+    verbs:    words.filter(w => w.verb),
+    subjects: words.filter(w => !w.verb && w.caseInfo && w.caseInfo.case === 'nominative'),
+    objects:  words.filter(w => !w.verb && w.caseInfo && w.caseInfo.case === 'accusative'),
+    other:    words.filter(w => !w.verb && !w.caseInfo),
   };
-  for (const [ending, label] of Object.entries(personMap)) {
-    if (w.endsWith(ending) && w.length > ending.length + 1) return { ending, label };
-  }
-  // Irregular verbs
-  const irr = ['est','sunt','potest','possunt','eo','eunt','it','vult','volunt','nolo','nolunt','fert','ferunt','adest','abest'];
-  if (irr.includes(w)) return { ending: w, label: 'irregular verb form' };
-  return null;
 }
 
-// Detect likely nominative (subject)
-function detectNominative(word) {
-  const w = word.toLowerCase().replace(/[.,!?;:]/g,'');
-  // Common nominative endings
-  if (w.endsWith('a') && !w.endsWith('ra')) return 'likely 1st declension nominative (-a)';
-  if (w.endsWith('us')) return 'likely 2nd declension nominative (-us)';
-  if (w.endsWith('er') && w.length > 3) return 'likely 2nd declension nominative (-er)';
-  if (w.endsWith('um') && w.length > 3) return 'likely 2nd declension neuter nominative/accusative (-um)';
-  return null;
-}
+// ── Coach state ───────────────────────────────────────────────
+let coach = { steps: [], stepIdx: 0, attempts: 0, parsed: null };
 
-// Detect likely accusative (object)
-function detectAccusative(word) {
-  const w = word.toLowerCase().replace(/[.,!?;:]/g,'');
-  if (w.endsWith('am')) return '1st declension accusative (-am)';
-  if (w.endsWith('um') && w.length > 3) return '2nd declension accusative (-um)';
-  if (w.endsWith('os')) return '2nd declension accusative plural (-os)';
-  if (w.endsWith('as')) return '1st declension accusative plural (-as)';
-  if (w.endsWith('em')) return '3rd declension accusative (-em)';
-  return null;
-}
-
-// Build the coaching step sequence for Latin → English
-function buildLatEngSteps(sentence) {
-  const words = sentence.trim().split(/\s+/);
-  const tokens = analyseTokens(words);
-
-  // Find the verb token
-  const verbTokens = tokens.filter(t => {
-    if (t.vocab && t.vocab.type.startsWith('verb')) return true;
-    if (detectVerbEnding(t.word)) return true;
-    return false;
-  });
-
-  // Find likely subject (nominative nouns)
-  const subjectTokens = tokens.filter(t => {
-    if (t.vocab && t.vocab.type.startsWith('noun')) {
-      const nom = detectNominative(t.word);
-      return !!nom;
-    }
-    return false;
-  });
-
-  // Find likely object (accusative)
-  const objectTokens = tokens.filter(t => {
-    const acc = detectAccusative(t.word);
-    return !!acc;
-  });
-
-  // Remaining words (prepositions, adverbs, adjectives)
-  const knownWordIds = new Set([
-    ...verbTokens.map(t=>t.word),
-    ...subjectTokens.map(t=>t.word),
-    ...objectTokens.map(t=>t.word)
-  ]);
-  const otherTokens = tokens.filter(t => !knownWordIds.has(t.word) && t.word);
-
+// ── Latin → English step builder ─────────────────────────────
+function buildLatEngSteps(sentence, parsed) {
   const steps = [];
+  const v = parsed.verbs[0];
+  const s = parsed.subjects[0];
+  const o = parsed.objects[0];
+  const extra = parsed.other.filter(t => t.vocab);
 
-  // Step 0: intro
-  steps.push({
-    type: 'intro',
-    msg: `Let's work through this sentence together: <em>${esc(sentence)}</em><br><br>We'll go word by word. First — read it through once and see what looks familiar. When you're ready, press <strong>Continue</strong> or type anything to start.`,
-    prompt: null,  // no typed response needed — any input advances
-    advance: 'any'
-  });
-
-  // Step 1: find the verb
-  if (verbTokens.length > 0) {
-    const vt = verbTokens[0];
-    const endInfo = detectVerbEnding(vt.word);
+  // STEP: find the verb
+  if (v) {
     steps.push({
-      type: 'find_verb',
-      targetWord: vt.word,
-      hint1: `Look at the endings of each word. Verbs in Latin have special personal endings. Can you spot a word that ends in <strong>-at, -ant, -et, -ent, -it, -unt</strong> — or similar? Type that word.`,
-      hint2: `Here are the most common 3rd person endings to look for: <strong>-at</strong> (he/she, verb 1), <strong>-et</strong> (verb 2), <strong>-it</strong> (verb 3/4), <strong>-ant/-ent/-unt</strong> (plural — they). Does any word in <em>${esc(sentence)}</em> end like that?`,
-      hint3: `The verb in this sentence is <em>${esc(vt.word)}</em>. It has the ending <strong>-${endInfo ? endInfo.ending : '?'}</strong>. Now — what does that ending tell you about the person and number?`,
-      prompt: 'Can you find the main verb? Type the Latin word.',
-      successMsg: (ans) => `Yes! <em>${esc(vt.word)}</em> is the verb. ${endInfo ? `The ending <strong>-${endInfo.ending}</strong> tells us it is <strong>${endInfo.label}</strong>.` : ''} Good — what action is it describing?`
+      id: 'find_verb',
+      ask: () =>
+        `First, let's find the <strong>main verb</strong> — the word telling us what is happening.<br><br>` +
+        `Latin verbs have personal endings. Look for:<br>` +
+        `<div style="font-size:0.85rem;line-height:2;margin:6px 0 10px">` +
+        `Verb 1: <strong>-o, -as, -at, -amus, -atis, -ant</strong><br>` +
+        `Verb 2: <strong>-eo, -es, -et, -emus, -etis, -ent</strong><br>` +
+        `Verb 3: <strong>-o, -is, -it, -imus, -itis, -unt</strong><br>` +
+        `Verb 4: <strong>-io, -is, -it, -imus, -itis, -iunt</strong></div>` +
+        `Look at each word in <em>${esc(sentence)}</em>. Which word has one of those endings?`,
+      check: ans => parsed.verbs.some(vv => vv.word === stripPunct(ans)),
+      hint1: () =>
+        `Look at the <strong>last 2–3 letters</strong> of each word. ` +
+        `Singular verbs end in <strong>-at, -et, -it</strong>. ` +
+        `Plural verbs end in <strong>-ant, -ent, -unt, -iunt</strong>. Which word ends like that?`,
+      hint2: () =>
+        `The verb is <em>${esc(v.word)}</em> — ending <strong>-${v.verb.ending}</strong>. ` +
+        `Type it and we'll work out what the ending tells us.`,
+      correct: () =>
+        `Good — <em>${esc(v.word)}</em> is the verb. ` +
+        (v.verb.conj !== 'irr'
+          ? `The ending <strong>-${v.verb.ending}</strong> tells us this is <strong>${v.verb.label}</strong>.`
+          : `It is an irregular form — ${v.verb.label}.`),
+      wrongMsg: () =>
+        `That's not the verb. Look for an ending like <strong>-at, -ant, -et, -ent, -it, -unt</strong>.`,
     });
 
-    // Step 2: what does the verb ending tell us?
+    // STEP: singular or plural?
+    const isPlural = ['p1','p2','p3'].includes(v.verb.person);
     steps.push({
-      type: 'verb_person',
-      targetWord: vt.word,
-      endInfo: endInfo,
-      hint1: `Look at the ending of <em>${esc(vt.word)}</em>. Does it end in <strong>-t</strong> (one person — he/she) or <strong>-nt</strong> (several people — they)?`,
-      hint2: `The ending <strong>-${endInfo ? endInfo.ending : '?'}</strong> means <strong>${endInfo ? endInfo.label : '3rd person'}</strong>. So this verb describes what one person or several people are doing — is it he/she, or they?`,
-      prompt: `What person and number does <em>${esc(vt.word)}</em> tell you — is it he/she (singular) or they (plural)?`,
-      successMsg: () => `Exactly right. Now let's find the subject — who is doing this action?`
-    });
-  } else {
-    // No clear verb — could be nominal sentence or imperative
-    steps.push({
-      type: 'no_verb_note',
-      msg: `Interesting — this sentence may not have a finite verb, or it might use <em>est/sunt</em> (is/are). Look carefully: is there a form of <em>sum</em> (est, sunt, es) present?`,
-      prompt: 'What do you notice about the verbs in this sentence? Type your thoughts.',
-      advance: 'any'
+      id: 'verb_number',
+      ask: () =>
+        `The verb is <em>${esc(v.word)}</em>, with the ending <strong>-${v.verb.ending}</strong>.<br><br>` +
+        `Is that a <strong>singular</strong> ending (one person doing it) or a <strong>plural</strong> ending (more than one)?`,
+      check: ans => {
+        const a = ans.toLowerCase();
+        const saidSing = /sing|one|he|she|it\b/.test(a);
+        const saidPlur = /plur|they|we|more|many/.test(a);
+        return isPlural ? saidPlur : saidSing;
+      },
+      hint1: () =>
+        `Short endings like <strong>-at, -et, -it</strong> are singular. ` +
+        `Longer endings like <strong>-ant, -ent, -unt, -iunt</strong> are plural. ` +
+        `Which category does <strong>-${v.verb.ending}</strong> fall into?`,
+      hint2: () =>
+        `<strong>-${v.verb.ending}</strong> is <strong>${isPlural ? 'plural' : 'singular'}</strong>. ` +
+        `This verb describes what ${isPlural ? 'more than one person or thing is' : 'one person or thing is'} doing.`,
+      correct: () =>
+        `Exactly — <strong>${isPlural ? 'plural' : 'singular'}</strong>, so this is <strong>${v.verb.label}</strong>. ` +
+        `Now let's find the subject.`,
+      wrongMsg: () =>
+        `Short endings (-at/-et/-it) = singular. Longer endings (-ant/-ent/-unt) = plural. ` +
+        `Which is <strong>-${v.verb.ending}</strong>?`,
     });
   }
 
-  // Step 3: find the subject
-  if (subjectTokens.length > 0) {
-    const st = subjectTokens[0];
-    const nomInfo = detectNominative(st.word);
+  // STEP: find the subject
+  if (s) {
+    const verbPlural = v && ['p1','p2','p3'].includes(v.verb.person);
     steps.push({
-      type: 'find_subject',
-      targetWord: st.word,
-      hint1: `The subject is the person or thing doing the action. In Latin, subjects are in the <strong>nominative case</strong>. Look for a noun ending in <strong>-a</strong> (1st decl.), <strong>-us</strong> or <strong>-er</strong> (2nd decl. masc.), or <strong>-um</strong> (neuter). Which word in <em>${esc(sentence)}</em> looks like that?`,
-      hint2: `Remember: nominative endings include <strong>-a, -us, -er, -um</strong>. The subject is usually the first noun. Try looking at the beginning of the sentence.`,
-      hint3: `The subject is <em>${esc(st.word)}</em> — a nominative noun (${nomInfo || 'nominative case'}). This is who/what is doing the action.`,
-      prompt: 'Can you find the subject (nominative noun)? Type the Latin word.',
-      successMsg: (ans) => `Well spotted! <em>${esc(st.word)}</em> is the subject — it's in the nominative case. It's the one doing the action. ${st.vocab ? `Do you know what <em>${esc(st.word)}</em> means in English?` : 'What do you think it means?'}`
+      id: 'find_subject',
+      ask: () =>
+        `Now find the <strong>subject</strong> — who or what is doing the action.<br><br>` +
+        `Subjects are in the <strong>nominative case</strong>. Nominative endings:<br>` +
+        `<div style="font-size:0.85rem;line-height:2;margin:6px 0 10px">` +
+        `1st decl.: <strong>-a</strong> (sing.) &nbsp;·&nbsp; <strong>-ae</strong> (pl.)<br>` +
+        `2nd decl.: <strong>-us / -er</strong> (sing.) &nbsp;·&nbsp; <strong>-i</strong> (pl.)<br>` +
+        `Neuter: <strong>-um</strong> (sing.) &nbsp;·&nbsp; <strong>-a</strong> (pl.)</div>` +
+        (v ? `The verb is <strong>${verbPlural ? 'plural' : 'singular'}</strong>, so look for a <strong>${verbPlural ? 'plural' : 'singular'} nominative</strong>. ` : '') +
+        `Which word in <em>${esc(sentence)}</em> is the subject?`,
+      check: ans => parsed.subjects.some(ss => ss.word === stripPunct(ans)),
+      hint1: () =>
+        (verbPlural
+          ? `Since the verb is plural, the subject ending will be plural too — look for <strong>-ae</strong> (1st decl.) or <strong>-i</strong> (2nd decl.).`
+          : `Since the verb is singular, look for a singular nominative ending — <strong>-a</strong> (1st decl.) or <strong>-us/-er</strong> (2nd decl.).`),
+      hint2: () =>
+        `The subject is <em>${esc(s.word)}</em> — ${s.caseInfo.note}. Type it.`,
+      correct: () =>
+        `Well spotted — <em>${esc(s.word)}</em> is the subject (${s.caseInfo.note}). ` +
+        (s.vocab ? `What does <em>${esc(s.word)}</em> mean in English?` : `Good.`),
+      wrongMsg: () =>
+        `Not quite. The subject (nominative) ends in <strong>-a, -ae, -us, -er, -i</strong>. Which word fits?`,
     });
 
-    // Step 3b: what does the subject mean?
-    if (st.vocab) {
+    // STEP: subject meaning
+    if (s.vocab) {
+      const eng = s.vocab.english;
+      const keys = eng.toLowerCase().split(/[\s,/]+/).filter(w => w.length > 2 && !['the','and','for','from','with','away'].includes(w));
       steps.push({
-        type: 'subject_meaning',
-        targetVocab: st.vocab,
-        targetWord: st.word,
-        hint1: `Think about your vocabulary. <em>${esc(st.word)}</em> is a noun. What type of person or thing is it? Check your word list if you're unsure.`,
-        hint2: `<em>${esc(st.word)}</em> — the first part of the word might remind you of an English word (many Latin words have English descendants). Think hard before looking it up.`,
-        hint3: `<em>${esc(st.word)}</em> means <strong>${esc(st.vocab.english)}</strong>. Make sure you remember that one — it's on the prescribed list.`,
-        prompt: `What does <em>${esc(st.word)}</em> mean in English?`,
-        successMsg: () => `Correct! Good vocabulary knowledge. Now let's look for the object.`
+        id: 'subject_meaning',
+        ask: () => `What does <em>${esc(s.word)}</em> mean in English?`,
+        check: ans => keys.some(k => ans.toLowerCase().includes(k)),
+        hint1: () => `Look up <em>${esc(s.word)}</em> in your vocabulary list — it is a ${s.vocab.type}.`,
+        hint2: () =>
+          `<em>${esc(s.word)}</em> means <strong>${esc(eng)}</strong>` +
+          (s.caseInfo.number === 'plural' ? ` — it is plural here, so think of it as "${esc(eng.replace(/^(a |the |I )?/, ''))}s".` : '.'),
+        correct: () =>
+          (s.caseInfo.number === 'plural'
+            ? `Good — and remember it's <strong>plural</strong> here: "${esc(eng.replace(/^(a |the |I )?/, ''))}s". `
+            : `Good. `) +
+          (o ? `Now let's find the object.` : `Now let's put it all together.`),
+        wrongMsg: () => `Look up <em>${esc(s.word)}</em> in your vocabulary list.`,
       });
     }
   }
 
-  // Step 4: find the object (if any)
-  if (objectTokens.length > 0) {
-    const ot = objectTokens[0];
-    const accInfo = detectAccusative(ot.word);
+  // STEP: find the object
+  if (o) {
     steps.push({
-      type: 'find_object',
-      targetWord: ot.word,
-      hint1: `The direct object is the person or thing receiving the action — it's in the <strong>accusative case</strong>. Accusative endings include <strong>-am</strong> (1st decl.), <strong>-um</strong> (2nd decl.), <strong>-em</strong> (3rd decl.), <strong>-os/-as</strong> (plurals). Can you spot that in <em>${esc(sentence)}</em>?`,
-      hint2: `Look for a word ending in <strong>-am, -um, -em, -os, -as</strong> — those are accusative endings. The object is what's being acted upon.`,
-      hint3: `The object is <em>${esc(ot.word)}</em> — ${accInfo || 'accusative case'}. This is what's receiving the action.`,
-      prompt: 'Can you find the direct object (accusative noun)? Type the Latin word.',
-      successMsg: (ans) => `Good! <em>${esc(ot.word)}</em> is the object — accusative case. ${ot.vocab ? `What does <em>${esc(ot.word)}</em> mean in English?` : 'Do you know what it means?'}`
+      id: 'find_object',
+      ask: () =>
+        `Now find the <strong>direct object</strong> — the person or thing the action is done <em>to</em>.<br><br>` +
+        `Objects are in the <strong>accusative case</strong>. Accusative endings:<br>` +
+        `<div style="font-size:0.85rem;line-height:2;margin:6px 0 10px">` +
+        `1st decl.: <strong>-am</strong> (sing.) &nbsp;·&nbsp; <strong>-as</strong> (pl.)<br>` +
+        `2nd decl.: <strong>-um</strong> (sing.) &nbsp;·&nbsp; <strong>-os</strong> (pl.)<br>` +
+        `3rd decl.: <strong>-em</strong> (sing.) &nbsp;·&nbsp; <strong>-es</strong> (pl.)</div>` +
+        `Which word in <em>${esc(sentence)}</em> is the object?`,
+      check: ans => parsed.objects.some(oo => oo.word === stripPunct(ans)),
+      hint1: () =>
+        `Look for accusative endings: <strong>-am, -um, -em</strong> (singular) or <strong>-as, -os, -es</strong> (plural). ` +
+        `The object is what's being acted upon.`,
+      hint2: () =>
+        `The object is <em>${esc(o.word)}</em> — ${o.caseInfo.note}. Type it.`,
+      correct: () =>
+        `Correct — <em>${esc(o.word)}</em> is the object (${o.caseInfo.note}). ` +
+        (o.vocab ? `What does <em>${esc(o.word)}</em> mean in English?` : `Good.`),
+      wrongMsg: () =>
+        `Not the object. Accusative endings are <strong>-am, -um, -em, -as, -os</strong>. Which word has one of those?`,
     });
 
-    if (ot.vocab) {
+    // STEP: object meaning
+    if (o.vocab) {
+      const eng = o.vocab.english;
+      const keys = eng.toLowerCase().split(/[\s,/]+/).filter(w => w.length > 2 && !['the','and','for','from','with','away'].includes(w));
       steps.push({
-        type: 'object_meaning',
-        targetVocab: ot.vocab,
-        targetWord: ot.word,
-        hint1: `<em>${esc(ot.word)}</em> is the object. What does it mean? Check your vocabulary list if needed.`,
-        hint2: `The base form of this word (removing the accusative ending) might help you recognise it.`,
-        hint3: `<em>${esc(ot.word)}</em> means <strong>${esc(ot.vocab.english)}</strong>.`,
-        prompt: `What does <em>${esc(ot.word)}</em> mean in English?`,
-        successMsg: () => `Well done. ${otherTokens.length > 0 ? "Let's look at any remaining words." : "Good — now try putting it all together."}`
+        id: 'object_meaning',
+        ask: () => `What does <em>${esc(o.word)}</em> mean in English?`,
+        check: ans => keys.some(k => ans.toLowerCase().includes(k)),
+        hint1: () => `Look up <em>${esc(o.word)}</em> in your vocabulary list. Its base form is <em>${esc(o.vocab.latin)}</em>.`,
+        hint2: () =>
+          `<em>${esc(o.word)}</em> means <strong>${esc(eng)}</strong>` +
+          (o.caseInfo.number === 'plural' ? ` — plural here: "${esc(eng.replace(/^(a |the )?/, ''))}s".` : '.'),
+        correct: () =>
+          (o.caseInfo.number === 'plural'
+            ? `Good — it's plural: "${esc(eng.replace(/^(a |the )?/, ''))}s". `
+            : `Good. `) +
+          (extra.length ? `One more thing to check.` : `Now let's put the whole thing together.`),
+        wrongMsg: () => `Look up <em>${esc(o.word)}</em> in your vocabulary list.`,
       });
     }
   }
 
-  // Step 5: other words (prepositions, adverbs, adjectives)
-  if (otherTokens.length > 0) {
-    const remaining = otherTokens.map(t => `<em>${esc(t.word)}</em>${t.vocab ? ` (${esc(t.vocab.type)})` : ''}`).join(', ');
+  // STEP: other words with vocab entries (prepositions, adverbs etc.)
+  if (extra.length > 0) {
+    const wordList = extra.map(t => `<em>${esc(t.word)}</em>`).join(', ');
     steps.push({
-      type: 'other_words',
-      tokens: otherTokens,
-      msg: `There ${otherTokens.length === 1 ? 'is' : 'are'} still ${otherTokens.length === 1 ? 'one word' : 'some words'} to account for: ${remaining}. Look each one up in your vocabulary list if needed. Prepositions like <em>in, ad, cum, ex</em> usually tell us about place, time, or manner. What do you think ${otherTokens.length === 1 ? 'it means' : 'they mean'}?`,
-      prompt: `What do the remaining words mean? Have a go.`,
-      advance: 'any'
+      id: 'extra_words',
+      ask: () =>
+        `There ${extra.length === 1 ? 'is' : 'are'} still ${extra.length === 1 ? 'one more word' : 'a few more words'} to account for: ${wordList}.<br><br>` +
+        `Look ${extra.length === 1 ? 'it' : 'them'} up and tell me what ${extra.length === 1 ? 'it' : 'they'} mean and how ${extra.length === 1 ? 'it' : 'they'} affect the translation.`,
+      check: () => true,
+      hint1: () => `Check your vocabulary list. Adverbs modify the verb; prepositions come before nouns.`,
+      hint2: () => extra.map(t => `<em>${esc(t.word)}</em> = ${esc(t.vocab.english)}`).join('; '),
+      correct: () => `Good — include that in your final translation.`,
+      wrongMsg: () => ``,
     });
   }
 
-  // Step 6: put it all together
+  // STEP: write the full translation
   steps.push({
-    type: 'full_translation',
-    sentence: sentence,
-    hint1: `You've found all the pieces. Remember in Latin: Nominative = subject, Accusative = object, and the verb comes last. Try writing out your complete English translation now.`,
-    hint2: `Think about the order: Who is doing it? (subject) → What are they doing? (verb) → To what/whom? (object) → Any extras (place, manner)?`,
-    hint3: null,  // no giveaway — just encourage
-    prompt: `Now try writing your complete English translation of: <em>${esc(sentence)}</em>`,
-    successMsg: () => `Excellent work! You've translated the sentence using your own understanding. That's exactly how to approach Latin — piece by piece, verb first, then subject and object.`
+    id: 'full_translation',
+    ask: () => {
+      let parts = `<ul style="margin:8px 0 12px 20px;line-height:2;font-size:0.92rem;">`;
+      if (v) parts += `<li><strong>Verb:</strong> <em>${esc(v.word)}</em> — ${v.verb.label}</li>`;
+      if (s) parts += `<li><strong>Subject:</strong> <em>${esc(s.word)}</em> — nominative ${s.caseInfo.number}${s.vocab ? ` (${esc(s.vocab.english)})` : ''}</li>`;
+      if (o) parts += `<li><strong>Object:</strong> <em>${esc(o.word)}</em> — accusative ${o.caseInfo.number}${o.vocab ? ` (${esc(o.vocab.english)})` : ''}</li>`;
+      extra.forEach(t => { parts += `<li><em>${esc(t.word)}</em> = ${esc(t.vocab.english)}</li>`; });
+      parts += `</ul>`;
+      return `You've found all the pieces:${parts}` +
+        `Now write your complete English translation of <em>"${esc(sentence)}"</em>.<br><br>` +
+        `Important: if the Latin subject and verb are <strong>plural</strong>, make sure your English is plural too.`;
+    },
+    check: ans => ans.trim().split(/\s+/).length >= 3,
+    hint1: () => `Write it as a normal English sentence: who → what they do → to what/whom. Include every word.`,
+    hint2: () => `Check agreement: if the subject is plural (ending -ae, -i), use a plural noun in English ("girls", not "the girl").`,
+    correct: () =>
+      `That's your translation — bene factum!<br><br>` +
+      `Check with your teacher: (1) Is the number right — singular or plural? ` +
+      `(2) Have you included every word? (3) Does it read naturally in English?`,
+    wrongMsg: () => `Write a full sentence — at least a subject and a verb. Have a go.`,
   });
 
   return steps;
 }
 
-// Build coaching steps for English → Latin
+// ── English → Latin step builder ─────────────────────────────
 function buildEngLatSteps(sentence) {
-  const steps = [];
-  const words = sentence.trim().split(/\s+/);
-
-  // Detect if English sentence has a verb
-  const hasVerb = /\b(is|are|am|was|were|carries|fights|walks|runs|sees|loves|builds|calls|warns|praises|frightens|remains|holds|leads|sings|gives|writes|reads|puts|conquers|watches|hurries|enters|stands|sails|attacks|works|prepares)\b/i.test(sentence);
-
-  steps.push({
-    type: 'intro',
-    msg: `We're going to compose <em>"${esc(sentence)}"</em> in Latin. I won't give you any Latin — but I'll ask the right questions to help you build it yourself. Ready?`,
-    prompt: null, advance: 'any'
-  });
-
-  if (hasVerb) {
-    steps.push({
-      type: 'eng2lat_verb_find',
-      msg: `First, find the verb in the English sentence: <em>"${esc(sentence)}"</em>. The verb is the action word.`,
-      prompt: 'What is the verb (action word) in the English sentence?',
-      hint1: 'The verb is the doing word — what action is happening in this sentence?',
-      hint2: 'Ask yourself: what is someone doing in this sentence?',
-      advance: 'any'
-    });
-
-    steps.push({
-      type: 'eng2lat_conj',
-      msg: `Good. Now — what conjugation group does that Latin verb belong to? Latin verbs are grouped 1 to 4 (plus mixed) by their infinitive ending: <strong>-are (1), -ēre (2), -ere (3), -ire (4)</strong>. Do you know which group your verb is in?`,
-      prompt: 'Which conjugation group (1, 2, 3, or 4) does this verb belong to? Check your principal parts.',
-      hint1: 'Look up the verb in your vocabulary list and check the infinitive (second principal part). Does it end in <strong>-are, -ere, -ēre,</strong> or <strong>-ire</strong>?',
-      hint2: `Verb 1 infinitives end in <strong>-are</strong> (e.g. amare). Verb 2 in <strong>-ēre</strong> (monēre). Verb 3 in <strong>-ere</strong> (regere). Verb 4 in <strong>-ire</strong> (audire).`,
-      advance: 'any'
-    });
-
-    steps.push({
-      type: 'eng2lat_person',
-      msg: `Now — what person and number is the subject? Is it <strong>I, you, he/she, we, you all,</strong> or <strong>they</strong>? The person and number determine which ending you add to the stem.`,
-      prompt: 'Is the verb 1st/2nd/3rd person, singular or plural?',
-      hint1: 'Who is doing the action in the English sentence? That tells you the person (1st = I/we, 2nd = you, 3rd = he/she/they).',
-      hint2: `For the present tense: verb 1 endings are <strong>-o, -as, -at, -amus, -atis, -ant</strong>. Verb 2: <strong>-eo, -es, -et, -emus, -etis, -ent</strong>. Verb 3: <strong>-o, -is, -it, -imus, -itis, -unt</strong>.`,
-      advance: 'any'
-    });
-  }
-
-  steps.push({
-    type: 'eng2lat_subject',
-    msg: `What is the subject (the person doing the action)? In Latin, the subject goes in the <strong>nominative case</strong>. Look up the noun and check its nominative singular form.`,
-    prompt: 'What is the Latin subject? What case will it be in?',
-    hint1: 'The subject goes in the nominative case. For 1st declension nouns, that usually ends in <strong>-a</strong>. For 2nd declension masculine: <strong>-us</strong> or <strong>-er</strong>.',
-    hint2: 'Look up the subject noun in your vocabulary list — it will show the nominative form as the headword.',
-    advance: 'any'
-  });
-
-  if (/\b(the|a|an)\b.*\b(farmer|sailor|slave|girl|boy|man|woman|master|teacher|daughter|son|friend|enemy|soldier|poet)\b/i.test(sentence)) {
-    steps.push({
-      type: 'eng2lat_object',
-      msg: `Is there a direct object — something or someone receiving the action? In Latin, the direct object goes in the <strong>accusative case</strong>. Change the nominative ending to accusative: <strong>-a → -am</strong> (1st decl.), <strong>-us → -um</strong> (2nd decl.).`,
-      prompt: 'What is the object, and what accusative ending will it take?',
-      hint1: 'The accusative (object) for 1st declension nouns: change <strong>-a → -am</strong>. For 2nd declension: change <strong>-us → -um</strong>.',
-      hint2: 'Ask yourself: is someone receiving the action? If so, that word needs an accusative ending.',
-      advance: 'any'
-    });
-  }
-
-  steps.push({
-    type: 'eng2lat_write',
-    msg: `You've identified all the pieces. Now try writing the complete Latin sentence. Remember: Latin word order is usually <strong>Subject → Object → Verb</strong>, though it is flexible. Make sure every word has the right ending.`,
-    prompt: `Write the complete Latin sentence for: "${esc(sentence)}"`,
-    hint1: 'Put the subject (nominative) first, then the object (accusative), then the verb at the end.',
-    hint2: `Double-check: does the verb ending match the subject (person and number)? Does the noun ending match its role (nominative subject, accusative object)?`,
-    advance: 'any',
-    successMsg: () => `Well done — you've built a Latin sentence from scratch! Check it against your vocab list to make sure every form is correct, then show it to your teacher.`
-  });
-
-  return steps;
+  const S = sentence;
+  return [
+    { id:'el_verb',    ask:() => `We're putting <em>"${esc(S)}"</em> into Latin, step by step.<br><br>What is the <strong>verb</strong> — the action word — in the English sentence?`, check:() => true, hint1:() => `The verb is the doing word. What is someone <em>doing</em> in this sentence?`, hint2:() => ``, correct:() => `Good. Look it up in your vocabulary list.`, wrongMsg:() => `` },
+    { id:'el_conj',    ask:() => `What <strong>conjugation number</strong> is it — 1, 2, 3, or 4?<br><div style="font-size:0.85rem;line-height:2;margin:6px 0">Check the <strong>infinitive</strong> (second principal part):<br><strong>-āre</strong> = Verb 1 &nbsp;·&nbsp; <strong>-ēre</strong> = Verb 2 &nbsp;·&nbsp; <strong>-ere</strong> = Verb 3 &nbsp;·&nbsp; <strong>-īre</strong> = Verb 4</div>`, check:() => true, hint1:() => `Look at the infinitive ending in your vocabulary list's second principal part.`, hint2:() => ``, correct:() => `Good. Now work out which ending to use.`, wrongMsg:() => `` },
+    { id:'el_person',  ask:() => `Who is the subject — <strong>I / you / he,she,it / we / you all / they</strong>?<br><div style="font-size:0.85rem;line-height:2;margin:6px 0">Present endings — Verb 1: <strong>-o, -as, -at, -amus, -atis, -ant</strong><br>Verb 2: <strong>-eo, -es, -et, -emus, -etis, -ent</strong><br>Verb 3: <strong>-o, -is, -it, -imus, -itis, -unt</strong></div>What ending will you use?`, check:() => true, hint1:() => `Is the subject singular or plural? Count how many are doing the action.`, hint2:() => ``, correct:() => `Good. Now find the subject noun.`, wrongMsg:() => `` },
+    { id:'el_subject', ask:() => `What is the <strong>subject</strong> in Latin? Look it up and give it the right <strong>nominative</strong> ending.<br><div style="font-size:0.85rem;line-height:2;margin:6px 0">1st decl.: <strong>-a</strong> (sing.), <strong>-ae</strong> (pl.)<br>2nd decl.: <strong>-us/-er</strong> (sing.), <strong>-i</strong> (pl.)</div>`, check:() => true, hint1:() => `The subject takes the nominative case. 1st decl. nom. sing. ends in -a; 2nd decl. masc. in -us.`, hint2:() => ``, correct:() => `Good. Is there a direct object?`, wrongMsg:() => `` },
+    { id:'el_object',  ask:() => `Is there a <strong>direct object</strong>? If so, give it the <strong>accusative</strong> ending.<br><div style="font-size:0.85rem;line-height:2;margin:6px 0">1st decl.: <strong>-am</strong> (sing.), <strong>-as</strong> (pl.)<br>2nd decl.: <strong>-um</strong> (sing.), <strong>-os</strong> (pl.)<br>3rd decl.: <strong>-em</strong> (sing.), <strong>-es</strong> (pl.)</div>`, check:() => true, hint1:() => `The direct object takes the accusative: 1st decl. -a → -am; 2nd decl. -us → -um.`, hint2:() => ``, correct:() => `Good. Now put it all together.`, wrongMsg:() => `` },
+    { id:'el_write',   ask:() => `Write the complete <strong>Latin sentence</strong> for <em>"${esc(S)}"</em>.<br><br>Usual Latin word order: <strong>Subject (nom.) → Object (acc.) → Verb</strong>.<br>Check every word has the right ending before you write it.`, check:() => true, hint1:() => `Put the nominative subject first, accusative object second, verb last.`, hint2:() => `Double-check every ending: does the verb agree with the subject?`, correct:() => `<strong>Bene factum!</strong> Show your answer to your teacher to check it is correct.`, wrongMsg:() => `` },
+  ];
 }
 
-// ── Handle the student's response ──
-function evaluateResponse(input, step) {
-  const lower = input.toLowerCase().trim().replace(/[.,!?;:]/g,'');
+// ── UI ────────────────────────────────────────────────────────
 
-  // "I don't know" patterns
-  const dontKnow = /^(i don.?t know|idk|no idea|don.?t know|not sure|help|stuck|dunno|i give up|not a clue)$/i.test(lower);
-  const veryShort = lower.split(/\s+/).length <= 1 && lower.length <= 3 && !['yes','no','ok','yep','nope'].includes(lower);
-
-  if (dontKnow || veryShort) return 'dontknow';
-
-  if (step.advance === 'any') return 'advance';
-
-  // Verb finding steps — check if they've typed the right word
-  if (step.type === 'find_verb' || step.type === 'find_subject' || step.type === 'find_object') {
-    const target = step.targetWord.toLowerCase();
-    if (lower.includes(target) || target.includes(lower)) return 'correct';
-    return 'wrong';
-  }
-
-  // Verb person step — accept singular/plural/s3/p3 type answers
-  if (step.type === 'verb_person') {
-    const sing = /\b(singular|he|she|it|one|3rd sing|third sing|he.she|third person singular)\b/i.test(input);
-    const plur = /\b(plural|they|more than one|third plural|3rd plural|third person plural)\b/i.test(input);
-    if (sing || plur) return 'correct';
-    return 'wrong';
-  }
-
-  // Meaning steps — accept if they include any key word from the English meaning
-  if (step.type === 'subject_meaning' || step.type === 'object_meaning') {
-    const meaning = step.targetVocab.english.toLowerCase();
-    const meaningWords = meaning.split(/[\s,\/]+/).filter(w => w.length > 2);
-    if (meaningWords.some(w => lower.includes(w))) return 'correct';
-    return 'wrong';
-  }
-
-  // Full translation step — accept anything non-trivial
-  if (step.type === 'full_translation') {
-    if (lower.split(/\s+/).length >= 3) return 'correct';
-    return 'wrong';
-  }
-
-  return 'advance'; // default: accept and move on
-}
-
-// ── Start the coaching session ──
 function startTranslation() {
-  const input = document.getElementById('trSentenceInput').value.trim();
-  if (!input) return;
+  const inputEl  = document.getElementById('trSentenceInput');
+  const sentence = inputEl.value.trim();
+  if (!sentence) return;
 
-  trSentence = input;
-  coach.sentence = input;
-  coach.step = 0;
+  trSentence     = sentence;
+  coach.stepIdx  = 0;
   coach.attempts = 0;
-  coach.analysis = {};
 
-  // Build the step sequence
-  if (trDirection === 'lat2eng') {
-    coach.steps = buildLatEngSteps(input);
+  if (trDirection === 'eng2lat') {
+    coach.steps  = buildEngLatSteps(sentence);
+    coach.parsed = null;
   } else {
-    coach.steps = buildEngLatSteps(input);
+    coach.parsed = parseSentence(sentence);
+    coach.steps  = buildLatEngSteps(sentence, coach.parsed);
   }
 
-  // Clear chat
-  const chat = document.getElementById('trChat');
+  const chat  = document.getElementById('trChat');
   const empty = document.getElementById('trEmpty');
   if (empty) empty.style.display = 'none';
-  chat.innerHTML = `<div class="tr-typing" id="trTyping" style="display:none">Magister is thinking…</div>`;
-
+  chat.innerHTML = `<div class="tr-typing" id="trTyping" style="display:none"></div>`;
   document.getElementById('trReplyZone').style.display = 'flex';
   document.getElementById('trReplyInput').value = '';
 
-  const dirLabel = trDirection === 'lat2eng' ? 'Latin → English' : 'English → Latin';
-  addBubble('tutor', `<strong>Translation Coach &nbsp;·&nbsp; ${dirLabel}</strong><em style="font-family:'IM Fell English',serif;font-size:1.1rem;display:block;margin-top:4px;">"${esc(input)}"</em>`);
+  const dirLabel = trDirection === 'lat2eng' ? 'Latin \u2192 English' : 'English \u2192 Latin';
+  addBubble('tutor',
+    `<strong>Translation Coach \u00b7 ${dirLabel}</strong>` +
+    `<em style="font-family:'IM Fell English',serif;font-size:1.1rem;display:block;margin-top:4px">"${esc(sentence)}"</em>`
+  );
 
-  // Deliver first step
-  deliverStep();
-}
-
-function deliverStep() {
-  if (coach.step >= coach.steps.length) {
-    addBubble('tutor', `<strong>Magister</strong>You've worked through the whole sentence — bene factum! If you want to try another one, type it in the box above and press Begin again.`);
-    return;
-  }
-  const step = coach.steps[coach.step];
-  coach.attempts = 0;
-
-  let msg = step.msg || step.hint1 || step.prompt || '';
-
-  // For intro and 'any-advance' steps that have both msg and prompt
-  if (step.msg && step.prompt) {
-    msg = step.msg + `<br><br><span style="color:var(--gold-light);font-style:italic">${step.prompt}</span>`;
-  } else if (!step.msg && step.prompt) {
-    msg = step.prompt;
-  }
-
-  addBubble('tutor', `<strong>Magister</strong>${msg}`);
+  _deliverStep();
   document.getElementById('trReplyInput').focus();
 }
 
-// ── Handle each student reply ──
-function sendReply() {
-  if (trBusy) return;
-  const input = document.getElementById('trReplyInput');
-  const reply = input.value.trim();
-  if (!reply) return;
-
-  input.value = '';
-  input.style.height = '38px';
-  addBubble('student', `<strong>You</strong>${esc(reply)}`);
-
-  if (coach.step >= coach.steps.length) {
-    addBubble('tutor', `<strong>Magister</strong>You've finished! Type a new sentence above and press Begin to try another.`);
+function _deliverStep() {
+  if (coach.stepIdx >= coach.steps.length) {
+    addBubble('tutor', `<strong>Magister</strong>Bene factum \u2014 you've worked all the way through! Type a new sentence above and press Begin to try another.`);
     return;
   }
-
-  const step = coach.steps[coach.step];
-  const result = evaluateResponse(reply, step);
-
-  if (result === 'dontknow') {
-    // Give progressively more detailed hints
-    coach.attempts++;
-    if (coach.attempts === 1 && step.hint1) {
-      addBubble('tutor', `<strong>Magister</strong>That's okay — let me give you a clue. ${step.hint1}`);
-    } else if (coach.attempts === 2 && step.hint2) {
-      addBubble('tutor', `<strong>Magister</strong>Let me be more specific. ${step.hint2}`);
-    } else if (coach.attempts >= 3 && step.hint3) {
-      addBubble('tutor', `<strong>Magister</strong>${step.hint3} ${step.prompt ? `<br><em>${step.prompt}</em>` : ''}`);
-    } else {
-      // Move on — can't stay stuck forever
-      addBubble('tutor', `<strong>Magister</strong>Don't worry — this is a tricky one. Let's move to the next step and come back to this with your teacher.`);
-      coach.step++;
-      deliverStep();
-    }
-    return;
-  }
-
-  if (result === 'correct') {
-    coach.step++;
-    const prev = coach.steps[coach.step - 1];
-    const praise = prev.successMsg ? prev.successMsg(reply) : pickPraise();
-    addBubble('tutor', `<strong>Magister</strong>${praise}`);
-    setTimeout(() => deliverStep(), 400);
-    return;
-  }
-
-  if (result === 'wrong') {
-    coach.attempts++;
-    if (coach.attempts === 1) {
-      const hint = step.hint1 || 'Not quite — try again. Think carefully about the ending of that word.';
-      addBubble('tutor', `<strong>Magister</strong>Not quite. ${hint}`);
-    } else if (coach.attempts === 2 && step.hint2) {
-      addBubble('tutor', `<strong>Magister</strong>Let me give you another clue. ${step.hint2}`);
-    } else if (coach.attempts >= 3) {
-      if (step.hint3) {
-        addBubble('tutor', `<strong>Magister</strong>${step.hint3}`);
-      } else {
-        addBubble('tutor', `<strong>Magister</strong>Let's move on and come back to this — it's tricky. Ask your teacher to check this word with you.`);
-      }
-      coach.step++;
-      setTimeout(() => deliverStep(), 600);
-    }
-    return;
-  }
-
-  // 'advance' — any response accepted, just move on
-  if (result === 'advance') {
-    coach.step++;
-    const prev = coach.steps[coach.step - 1];
-    if (prev && prev.successMsg) {
-      addBubble('tutor', `<strong>Magister</strong>${prev.successMsg(reply)}`);
-    }
-    setTimeout(() => deliverStep(), 300);
-  }
+  const step = coach.steps[coach.stepIdx];
+  coach.attempts = 0;
+  addBubble('tutor', `<strong>Magister</strong>${step.ask()}`);
+  document.getElementById('trReplyInput').focus();
 }
 
-function pickPraise() {
-  const options = [
-    'Exactly right!', 'Well spotted!', 'Correct — bene!',
-    'That\'s it — good thinking.', 'Right — you\'ve got it.',
-    'Perfect. On to the next step.', 'Good — optime!'
-  ];
-  return options[Math.floor(Math.random() * options.length)];
+function sendReply() {
+  const inputEl = document.getElementById('trReplyInput');
+  const reply   = inputEl.value.trim();
+  if (!reply) return;
+  inputEl.value = '';
+  inputEl.style.height = '38px';
+  addBubble('student', `<strong>You</strong>${esc(reply)}`);
+
+  if (coach.steps.length === 0) { startTranslation(); return; }
+  if (coach.stepIdx >= coach.steps.length) {
+    addBubble('tutor', `<strong>Magister</strong>You've finished! Type a new sentence above and press Begin.`);
+    return;
+  }
+
+  const step = coach.steps[coach.stepIdx];
+
+  const dontKnow = /^(i don.?t know|idk|no idea|not sure|help|stuck|dunno|give up|no clue|i.?m lost|\?+|huh|what|unsure)$/i.test(reply.trim())
+    || reply.trim().length <= 2;
+
+  if (dontKnow) {
+    coach.attempts++;
+    if (coach.attempts === 1) {
+      addBubble('tutor', `<strong>Magister</strong>That's okay \u2014 here's a clue.<br><br>${step.hint1()}`);
+    } else if (coach.attempts === 2 && step.hint2 && step.hint2()) {
+      addBubble('tutor', `<strong>Magister</strong>Let me be more specific.<br><br>${step.hint2()}`);
+    } else {
+      addBubble('tutor', `<strong>Magister</strong>Don\u2019t worry \u2014 let\u2019s move on. Check this one with your teacher.`);
+      coach.stepIdx++;
+      _deliverStep();
+    }
+    return;
+  }
+
+  if (step.check(reply)) {
+    const praise = step.correct ? step.correct(reply) : '';
+    coach.stepIdx++;
+    if (praise) addBubble('tutor', `<strong>Magister</strong>${praise}`);
+    setTimeout(_deliverStep, praise ? 350 : 0);
+  } else {
+    coach.attempts++;
+    if (coach.attempts === 1) {
+      addBubble('tutor', `<strong>Magister</strong>${step.wrongMsg() || 'Not quite.'}<br><br>${step.hint1()}`);
+    } else if (coach.attempts === 2) {
+      const h2 = step.hint2 && step.hint2();
+      addBubble('tutor', `<strong>Magister</strong>${h2 || step.hint1()}`);
+    } else {
+      const h2 = step.hint2 && step.hint2();
+      addBubble('tutor', `<strong>Magister</strong>${h2 || `Let\u2019s move on \u2014 check this with your teacher.`}`);
+      coach.stepIdx++;
+      setTimeout(_deliverStep, 400);
+    }
+  }
 }
 
 function addBubble(type, html) {
-  const chat = document.getElementById('trChat');
+  const chat   = document.getElementById('trChat');
   const typing = document.getElementById('trTyping');
-  const div = document.createElement('div');
+  const div    = document.createElement('div');
   div.className = `tr-bubble ${type}`;
   div.innerHTML = html;
-  if (typing && typing.parentNode === chat) {
-    chat.insertBefore(div, typing);
-  } else {
-    chat.appendChild(div);
-  }
+  if (typing && typing.parentNode === chat) chat.insertBefore(div, typing);
+  else chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
+
 
 // ── TEST GENERATOR ──
 let tgQuestions = [];
