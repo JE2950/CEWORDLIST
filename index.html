@@ -1220,10 +1220,9 @@
   .tab-btn.active { color: var(--gold-light); border-bottom-color: var(--gold-light); }
 
   /* ── GRAMMAR PANEL ── */
-  #grammarPanel { display: none; padding: 24px 28px 60px; max-width: 1300px; margin: 0 auto; }
-  #grammarPanel.active { display: block; }
+  #grammarPanel { padding: 24px 28px 60px; max-width: 1300px; margin: 0 auto; }
+  #resourcesPanel { padding: 24px 28px 60px; max-width: 1000px; margin: 0 auto; }
   #vocabPanel { display: block; }
-  #vocabPanel.hidden { display: none; }
 
   .gram-section { margin-bottom: 36px; }
   .gram-section-title {
@@ -1469,506 +1468,123 @@
 
   /* Grammar badge in test */
   .tg-q-badge.grammar { background:rgba(184,134,11,0.12); color:var(--gold); border-color:rgba(184,134,11,0.3); }
+
+  /* ── CE LEVEL TOGGLE ── */
+  .ce-toggle-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    background: var(--paper-dark, #e8dfc8);
+    border-bottom: 2px solid var(--border, #c8b880);
+    padding: 10px 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .ce-toggle-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--ink-faint, #8b7d5a);
+    text-transform: uppercase;
+    margin-right: 4px;
+  }
+  .ce-btn-group {
+    display: flex;
+    border: 1.5px solid var(--gold-light, #c8a84b);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .ce-btn {
+    padding: 6px 18px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    border: none;
+    border-right: 1px solid var(--gold-light, #c8a84b);
+    background: var(--paper, #f0e6c8);
+    color: var(--ink-faint, #8b7d5a);
+    transition: all 0.15s;
+  }
+  .ce-btn:last-child { border-right: none; }
+  .ce-btn:hover { background: var(--gold-light, #c8a84b); color: var(--ink, #2a1f0a); }
+  .ce-btn.active { background: var(--gold-light, #c8a84b); color: var(--ink, #2a1f0a); font-weight: 700; }
+  .ce-filter-note {
+    font-size: 0.78rem;
+    color: var(--ink-faint, #8b7d5a);
+    font-style: italic;
+    margin-left: 6px;
+  }
+
+  /* Grammar sections hidden by CE level */
+  .gram-section[data-ce-min="2"] { }
+  .gram-section[data-ce-min="3"] { }
+  .gram-table-wrap[data-ce-min] { }
+  .gram-section.ce-hidden, .gram-table-wrap.ce-hidden, tr.ce-hidden { display: none !important; }
+
+  /* Resources card styling */
+  .res-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+    padding: 8px 0;
+  }
+  .res-card {
+    background: var(--paper-dark, #e8dfc8);
+    border: 1px solid var(--border, #c8b880);
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    gap: 14px;
+  }
+  .res-card-icon { font-size: 1.8rem; flex-shrink: 0; }
+  .res-card-body h3 {
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--ink, #2a1f0a);
+  }
+  .res-card-body p { font-size: 0.88rem; color: var(--ink-faint, #8b7d5a); margin-bottom: 10px; }
+  .res-links { display: flex; flex-direction: column; gap: 6px; }
+  .res-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    background: var(--gold-light, #c8a84b);
+    color: var(--ink, #2a1f0a);
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.84rem;
+    font-weight: 600;
+    transition: opacity 0.15s;
+  }
+  .res-link:hover { opacity: 0.8; }
+  .res-placeholder { font-size: 0.82rem; color: var(--ink-faint, #8b7d5a); font-style: italic; }
+  .res-intro { margin-bottom: 20px; }
 </style>
 </head>
 <body>
+<div class="ce-toggle-bar" id="ceToggleBar">
+  <span class="ce-toggle-label">CE Level:</span>
+  <div class="ce-btn-group">
+    <button class="ce-btn active" id="ceBtn1" onclick="setCELevel(1)">CE 1</button>
+    <button class="ce-btn" id="ceBtn2" onclick="setCELevel(2)">CE 1 + 2</button>
+    <button class="ce-btn" id="ceBtn3" onclick="setCELevel(3)">CE 1 + 2 + 3</button>
+  </div>
+  <span class="ce-filter-note" id="ceFilterNote">Showing Level 1 content only</span>
+</div>
+
 
 <!-- FLASHCARD OVERLAY -->
-<div class="fc-overlay" id="fcOverlay">
-  <div class="fc-modal">
-    <div class="fc-header">
-      <div>
-        <h3>Flashcards</h3>
-        <p id="fcHeaderSub">Set your filters, then start your session.</p>
-      </div>
-      <button class="fc-close" onclick="closeFlashcards()">✕</button>
-    </div>
-
-    <!-- SETUP -->
-    <div class="fc-setup" id="fcSetup">
-      <div class="fc-section">
-        <h4>CE Level</h4>
-        <div class="fc-row">
-          <div class="fc-chip lvl-L1 selected" data-group="fclevel" data-val="L1" onclick="toggleFcChip(this)">Level 1</div>
-          <div class="fc-chip lvl-L2 selected" data-group="fclevel" data-val="L2" onclick="toggleFcChip(this)">Level 2</div>
-          <div class="fc-chip lvl-L3" data-group="fclevel" data-val="L3" onclick="toggleFcChip(this)">Level 3</div>
-        </div>
-      </div>
-      <div class="fc-section">
-        <h4>Word Types</h4>
-        <div class="fc-row">
-          <div class="fc-chip selected" data-group="fctype" data-val="noun" onclick="toggleFcChip(this)">Nouns</div>
-          <div class="fc-chip selected" data-group="fctype" data-val="verb" onclick="toggleFcChip(this)">Verbs</div>
-          <div class="fc-chip selected" data-group="fctype" data-val="adjective" onclick="toggleFcChip(this)">Adjectives</div>
-          <div class="fc-chip" data-group="fctype" data-val="adverb" onclick="toggleFcChip(this)">Adverbs</div>
-          <div class="fc-chip" data-group="fctype" data-val="preposition" onclick="toggleFcChip(this)">Prepositions</div>
-          <div class="fc-chip" data-group="fctype" data-val="conjunction" onclick="toggleFcChip(this)">Conjunctions</div>
-          <div class="fc-chip" data-group="fctype" data-val="pronoun" onclick="toggleFcChip(this)">Pronouns</div>
-          <div class="fc-chip" data-group="fctype" data-val="cardinal" onclick="toggleFcChip(this)">Numbers</div>
-        </div>
-      </div>
-
-      <!-- Advanced filters -->
-      <div class="adv-filters">
-        <button class="adv-toggle" id="fcAdvToggle" onclick="toggleAdv('fc')">
-          <span>&#9658; Advanced: declensions, conjugations, exclude specific words</span>
-          <span class="adv-arrow">&#9660;</span>
-        </button>
-        <div class="adv-body" id="fcAdvBody">
-          <div class="fg">
-            <div class="fg-label">Noun declensions
-              <a onclick="setAllCb('fcNoun',true)">all</a>
-              <a onclick="setAllCb('fcNoun',false)">none</a>
-            </div>
-            <div class="cb-grid">
-              <label class="cb-item"><input type="checkbox" class="fcNoun" data-val="noun 1f" checked onchange="updateFcPool()"> 1st f <em>(puella)</em></label>
-              <label class="cb-item"><input type="checkbox" class="fcNoun" data-val="noun 1m" checked onchange="updateFcPool()"> 1st m <em>(nauta)</em></label>
-              <label class="cb-item"><input type="checkbox" class="fcNoun" data-val="noun 2m" checked onchange="updateFcPool()"> 2nd m <em>(dominus)</em></label>
-              <label class="cb-item"><input type="checkbox" class="fcNoun" data-val="noun 2n" checked onchange="updateFcPool()"> 2nd n <em>(bellum)</em></label>
-              <label class="cb-item"><input type="checkbox" class="fcNoun" data-val="noun 3m" checked onchange="updateFcPool()"> 3rd m <em>(rex)</em></label>
-              <label class="cb-item"><input type="checkbox" class="fcNoun" data-val="noun 3f" checked onchange="updateFcPool()"> 3rd f <em>(mors)</em></label>
-              <label class="cb-item"><input type="checkbox" class="fcNoun" data-val="noun 3n" checked onchange="updateFcPool()"> 3rd n <em>(corpus)</em></label>
-              <label class="cb-item"><input type="checkbox" class="fcNoun" data-val="noun 3m/f" checked onchange="updateFcPool()"> 3rd m/f <em>(civis)</em></label>
-              <label class="cb-item"><input type="checkbox" class="fcNoun" data-val="noun 4m" checked onchange="updateFcPool()"> 4th <em>(exercitus)</em></label>
-              <label class="cb-item"><input type="checkbox" class="fcNoun" data-val="noun 5f" checked onchange="updateFcPool()"> 5th <em>(res)</em></label>
-              <label class="cb-item"><input type="checkbox" class="fcNoun" data-val="noun irregular" checked onchange="updateFcPool()"> Irregular</label>
-            </div>
-          </div>
-          <div class="fg">
-            <div class="fg-label">Verb conjugations
-              <a onclick="setAllCb('fcVerb',true)">all</a>
-              <a onclick="setAllCb('fcVerb',false)">none</a>
-            </div>
-            <div class="cb-grid">
-              <label class="cb-item"><input type="checkbox" class="fcVerb" data-val="verb 1" checked onchange="updateFcPool()"> 1st <em>(amo)</em></label>
-              <label class="cb-item"><input type="checkbox" class="fcVerb" data-val="verb 2" checked onchange="updateFcPool()"> 2nd <em>(moneo)</em></label>
-              <label class="cb-item"><input type="checkbox" class="fcVerb" data-val="verb 3" checked onchange="updateFcPool()"> 3rd <em>(rego)</em></label>
-              <label class="cb-item"><input type="checkbox" class="fcVerb" data-val="verb 4" checked onchange="updateFcPool()"> 4th <em>(audio)</em></label>
-              <label class="cb-item"><input type="checkbox" class="fcVerb" data-val="verb 5 (mixed)" checked onchange="updateFcPool()"> Mixed <em>(capio)</em></label>
-              <label class="cb-item"><input type="checkbox" class="fcVerb" data-val="verb irregular" checked onchange="updateFcPool()"> Irregular</label>
-            </div>
-          </div>
-          <div class="fg">
-            <div class="fg-label">Adjective types
-              <a onclick="setAllCb('fcAdj',true)">all</a>
-              <a onclick="setAllCb('fcAdj',false)">none</a>
-            </div>
-            <div class="cb-grid">
-              <label class="cb-item"><input type="checkbox" class="fcAdj" data-val="adjective 2-1-2" checked onchange="updateFcPool()"> 2-1-2 <em>(bonus)</em></label>
-              <label class="cb-item"><input type="checkbox" class="fcAdj" data-val="adjective 3rd" checked onchange="updateFcPool()"> 3rd decl. <em>(fortis)</em></label>
-            </div>
-          </div>
-          <div class="fg">
-            <div class="fg-label">Exclude specific words
-              <a onclick="clearExclusions('fc')">clear all</a>
-            </div>
-            <input type="text" class="excl-search" id="fcExclSearch" placeholder="Search to exclude words..." oninput="renderExclList('fc')">
-            <div class="excl-list" id="fcExclList"></div>
-            <div class="excl-count" id="fcExclCount"></div>
-          </div>
-          <div class="fg">
-            <div class="fg-label">Also include question words
-            </div>
-            <div class="cb-grid">
-              <label class="cb-item"><input type="checkbox" class="fcQW" data-val="question word" checked onchange="updateFcPool()"> Question words <em>(quis, cur, ubi...)</em></label>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="fc-section">
-        <h4>Card Mode</h4>
-        <div class="fc-row">
-          <div class="fc-chip selected" data-group="fcmode" data-val="lat2eng" onclick="toggleFcSingle(this)">Latin → English</div>
-          <div class="fc-chip" data-group="fcmode" data-val="eng2lat" onclick="toggleFcSingle(this)">English → Latin</div>
-          <div class="fc-chip" data-group="fcmode" data-val="mixed" onclick="toggleFcSingle(this)">Mixed</div>
-        </div>
-      </div>
-      <div class="fc-section">
-        <h4>Options</h4>
-        <div class="fc-row" style="align-items:center;gap:18px;">
-          <label style="display:flex;align-items:center;gap:6px;font-size:0.9rem;color:var(--ink-faint);cursor:pointer;">
-            <input type="checkbox" id="fcShowInfo" checked> Show principal parts
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:0.9rem;color:var(--ink-faint);cursor:pointer;">
-            <input type="checkbox" id="fcMissedOnly"> Review missed cards only
-          </label>
-        </div>
-      </div>
-      <div class="fc-pool-info" id="fcPoolInfo">Select filters to see word count.</div>
-      <div class="fc-actions">
-        <button class="fc-start-btn" id="fcStartBtn" onclick="startFlashcards()">▶ Start Session</button>
-        <button class="fc-print-btn" onclick="printFlashcards()">⎙ Print cards</button>
-      </div>
-    </div>
-
-    <!-- CARD AREA -->
-    <div class="fc-card-area" id="fcCardArea">
-      <div class="fc-progress-row">
-        <div class="fc-prog-bar"><div class="fc-prog-fill" id="fcProgFill" style="width:0%"></div></div>
-        <div class="fc-prog-label" id="fcProgLabel">0 / 0</div>
-      </div>
-      <div class="fc-card-wrap">
-        <div class="fc-card" id="fcCard" onclick="flipCard()">
-          <div class="fc-card-front" id="fcFront">
-            <div class="fc-card-label" id="fcFrontLabel">Latin</div>
-            <div class="fc-card-word" id="fcFrontWord">–</div>
-            <div class="fc-card-info" id="fcFrontInfo"></div>
-            <div class="fc-card-type" id="fcFrontType"></div>
-            <div class="fc-card-hint">Click to reveal</div>
-          </div>
-          <div class="fc-card-back" id="fcBack">
-            <div class="fc-card-label" id="fcBackLabel">English</div>
-            <div class="fc-card-word" id="fcBackWord">–</div>
-            <div class="fc-card-info" id="fcBackInfo"></div>
-          </div>
-        </div>
-      </div>
-      <div class="fc-btn-row pre-flip" id="fcBtnRow">
-        <button class="fc-flip-btn" onclick="flipCard()">Reveal →</button>
-        <button class="fc-know-btn" onclick="rateCard(true)">✓ Got it</button>
-        <button class="fc-unsure-btn" onclick="rateCard(false)">✗ Not yet</button>
-      </div>
-    </div>
-
-    <!-- SUMMARY -->
-    <div class="fc-summary" id="fcSummary">
-      <h3>Session complete!</h3>
-      <div class="fc-score-big" id="fcScoreBig"></div>
-      <div class="fc-score-sub" id="fcScoreSub"></div>
-      <div class="fc-summary-btns">
-        <button class="fc-again-btn" onclick="startFlashcards()">▶ Again (full deck)</button>
-        <button class="fc-retry-btn" id="fcRetryBtn" onclick="retryMissed()">↺ Retry missed</button>
-        <button class="fc-new-btn" onclick="resetFcToSetup()">← Change filters</button>
-      </div>
-    </div>
-
-  </div>
-</div>
 
 <!-- PRINT TOOL MODAL -->
-<div class="pt-overlay" id="ptOverlay">
-  <div class="pt-modal">
-    <div class="pt-header">
-      <div>
-        <h3>Print Worksheet</h3>
-        <p>Vocab test or look-cover-write-check sheet — filtered to your choice.</p>
-      </div>
-      <button class="pt-close" onclick="closePrintTool()">✕</button>
-    </div>
-    <div class="pt-body">
-
-      <div class="pt-section">
-        <h4>Sheet Type</h4>
-        <div class="pt-type-row">
-          <div class="pt-type-btn active" id="ptTypeTest" onclick="setPtType('test')">
-            <strong>Vocabulary Test</strong>
-            Latin → English or English → Latin questions, answers hidden
-          </div>
-          <div class="pt-type-btn" id="ptTypeLCWC" onclick="setPtType('lcwc')">
-            <strong>Look · Cover · Write · Check</strong>
-            Prep sheet with Latin, meaning, and write-in columns
-          </div>
-          <div class="pt-type-btn" id="ptTypeGram" onclick="setPtType('gram')">
-            <strong>Grammar &amp; Parsing</strong>
-            Decline, conjugate, give principal parts
-          </div>
-        </div>
-      </div>
-
-      <div class="pt-section">
-        <h4>Filters</h4>
-        <div class="pt-filter-row">
-          <label>Level</label>
-          <select class="pt-select" id="ptLevel" onchange="updatePtPool()">
-            <option value="">All levels</option>
-            <option value="L1">Level 1 only</option>
-            <option value="L2">Level 2 only</option>
-            <option value="L3">Level 3 only</option>
-            <option value="L1,L2">Levels 1 & 2</option>
-            <option value="L1,L2,L3">All levels</option>
-          </select>
-        </div>
-        <!-- Advanced filters -->
-        <div class="adv-filters">
-          <button class="adv-toggle" id="ptAdvToggle" onclick="toggleAdv('pt')">
-            <span>&#9658; Advanced: word types, declensions, conjugations, exclude words</span>
-            <span class="adv-arrow">&#9660;</span>
-          </button>
-          <div class="adv-body" id="ptAdvBody">
-            <div class="fg">
-              <div class="fg-label">Word categories
-                <a onclick="setAllCb('ptCat',true)">all</a>
-                <a onclick="setAllCb('ptCat',false)">none</a>
-              </div>
-              <div class="cb-grid">
-                <label class="cb-item"><input type="checkbox" class="ptCat" data-val="noun" checked onchange="updatePtPool()"> Nouns</label>
-                <label class="cb-item"><input type="checkbox" class="ptCat" data-val="verb" checked onchange="updatePtPool()"> Verbs</label>
-                <label class="cb-item"><input type="checkbox" class="ptCat" data-val="adjective" checked onchange="updatePtPool()"> Adjectives</label>
-                <label class="cb-item"><input type="checkbox" class="ptCat" data-val="adverb" checked onchange="updatePtPool()"> Adverbs</label>
-                <label class="cb-item"><input type="checkbox" class="ptCat" data-val="preposition" checked onchange="updatePtPool()"> Prepositions</label>
-                <label class="cb-item"><input type="checkbox" class="ptCat" data-val="conjunction" checked onchange="updatePtPool()"> Conjunctions</label>
-                <label class="cb-item"><input type="checkbox" class="ptCat" data-val="pronoun" checked onchange="updatePtPool()"> Pronouns</label>
-                <label class="cb-item"><input type="checkbox" class="ptCat" data-val="cardinal" checked onchange="updatePtPool()"> Numbers</label>
-                <label class="cb-item"><input type="checkbox" class="ptCat" data-val="question word" checked onchange="updatePtPool()"> Question words</label>
-              </div>
-            </div>
-            <div class="fg">
-              <div class="fg-label">Noun declensions
-                <a onclick="setAllCb('ptNoun',true)">all</a>
-                <a onclick="setAllCb('ptNoun',false)">none</a>
-              </div>
-              <div class="cb-grid">
-                <label class="cb-item"><input type="checkbox" class="ptNoun" data-val="noun 1f" checked onchange="updatePtPool()"> 1st f <em>(puella)</em></label>
-                <label class="cb-item"><input type="checkbox" class="ptNoun" data-val="noun 1m" checked onchange="updatePtPool()"> 1st m <em>(nauta)</em></label>
-                <label class="cb-item"><input type="checkbox" class="ptNoun" data-val="noun 2m" checked onchange="updatePtPool()"> 2nd m <em>(dominus)</em></label>
-                <label class="cb-item"><input type="checkbox" class="ptNoun" data-val="noun 2n" checked onchange="updatePtPool()"> 2nd n <em>(bellum)</em></label>
-                <label class="cb-item"><input type="checkbox" class="ptNoun" data-val="noun 3m" checked onchange="updatePtPool()"> 3rd m <em>(rex)</em></label>
-                <label class="cb-item"><input type="checkbox" class="ptNoun" data-val="noun 3f" checked onchange="updatePtPool()"> 3rd f <em>(mors)</em></label>
-                <label class="cb-item"><input type="checkbox" class="ptNoun" data-val="noun 3n" checked onchange="updatePtPool()"> 3rd n <em>(corpus)</em></label>
-                <label class="cb-item"><input type="checkbox" class="ptNoun" data-val="noun 3m/f" checked onchange="updatePtPool()"> 3rd m/f <em>(civis)</em></label>
-                <label class="cb-item"><input type="checkbox" class="ptNoun" data-val="noun 4m" checked onchange="updatePtPool()"> 4th <em>(exercitus)</em></label>
-                <label class="cb-item"><input type="checkbox" class="ptNoun" data-val="noun 5f" checked onchange="updatePtPool()"> 5th <em>(res)</em></label>
-                <label class="cb-item"><input type="checkbox" class="ptNoun" data-val="noun irregular" checked onchange="updatePtPool()"> Irregular</label>
-              </div>
-            </div>
-            <div class="fg">
-              <div class="fg-label">Verb conjugations
-                <a onclick="setAllCb('ptVerb',true)">all</a>
-                <a onclick="setAllCb('ptVerb',false)">none</a>
-              </div>
-              <div class="cb-grid">
-                <label class="cb-item"><input type="checkbox" class="ptVerb" data-val="verb 1" checked onchange="updatePtPool()"> 1st <em>(amo)</em></label>
-                <label class="cb-item"><input type="checkbox" class="ptVerb" data-val="verb 2" checked onchange="updatePtPool()"> 2nd <em>(moneo)</em></label>
-                <label class="cb-item"><input type="checkbox" class="ptVerb" data-val="verb 3" checked onchange="updatePtPool()"> 3rd <em>(rego)</em></label>
-                <label class="cb-item"><input type="checkbox" class="ptVerb" data-val="verb 4" checked onchange="updatePtPool()"> 4th <em>(audio)</em></label>
-                <label class="cb-item"><input type="checkbox" class="ptVerb" data-val="verb 5 (mixed)" checked onchange="updatePtPool()"> Mixed <em>(capio)</em></label>
-                <label class="cb-item"><input type="checkbox" class="ptVerb" data-val="verb irregular" checked onchange="updatePtPool()"> Irregular</label>
-              </div>
-            </div>
-            <div class="fg">
-              <div class="fg-label">Adjective types
-                <a onclick="setAllCb('ptAdj',true)">all</a>
-                <a onclick="setAllCb('ptAdj',false)">none</a>
-              </div>
-              <div class="cb-grid">
-                <label class="cb-item"><input type="checkbox" class="ptAdj" data-val="adjective 2-1-2" checked onchange="updatePtPool()"> 2-1-2 <em>(bonus)</em></label>
-                <label class="cb-item"><input type="checkbox" class="ptAdj" data-val="adjective 3rd" checked onchange="updatePtPool()"> 3rd decl. <em>(fortis)</em></label>
-              </div>
-            </div>
-            <div class="fg">
-              <div class="fg-label">Exclude specific words
-                <a onclick="clearExclusions('pt')">clear all</a>
-              </div>
-              <input type="text" class="excl-search" id="ptExclSearch" placeholder="Search to exclude words..." oninput="renderExclList('pt')">
-              <div class="excl-list" id="ptExclList"></div>
-              <div class="excl-count" id="ptExclCount"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="pt-pool-info" id="ptPoolInfo">Select filters to see word count.</div>
-      </div>
-
-      <div class="pt-section">
-        <h4>Options</h4>
-        <div class="pt-options" id="ptOptions">
-          <label><input type="checkbox" id="ptShuffle" checked> Shuffle order</label>
-          <label><input type="checkbox" id="ptShowInfo" checked> Show principal parts / info</label>
-          <div id="ptTestOpts" style="display:flex;gap:10px;flex-wrap:wrap;">
-            <label><input type="checkbox" id="ptLat2Eng" checked> Latin → English</label>
-            <label><input type="checkbox" id="ptEng2Lat"> English → Latin</label>
-            <label style="margin-left:4px">Max questions:
-              <select class="pt-select" id="ptMaxQ" style="margin-left:6px">
-                <option value="20" selected>20</option>
-                <option value="30">30</option>
-                <option value="40">40</option>
-                <option value="999">All</option>
-              </select>
-            </label>
-          </div>
-          <div id="ptLCWCOpts" style="display:none;gap:10px;flex-wrap:wrap;">
-            <label>Words per sheet:
-              <select class="pt-select" id="ptLCWCMaxQ" style="margin-left:6px">
-                <option value="8">8</option>
-                <option value="10" selected>10</option>
-                <option value="12">12</option>
-                <option value="15">15</option>
-                <option value="20">20</option>
-              </select>
-            </label>
-          </div>
-          <div id="ptGramOpts" style="display:none;gap:10px;flex-wrap:wrap;">
-            <label><input type="checkbox" id="ptGramDecl" checked> Declension forms (nouns &amp; adjectives)</label>
-            <label><input type="checkbox" id="ptGramConj" checked> Verb conjugation forms</label>
-            <label><input type="checkbox" id="ptGramPP" checked> Principal parts</label>
-            <label><input type="checkbox" id="ptGramTense"> Tense identification</label>
-            <label style="margin-left:4px">Questions per sheet:
-              <select class="pt-select" id="ptGramMaxQ" style="margin-left:6px">
-                <option value="15">15</option>
-                <option value="20" selected>20</option>
-                <option value="25">25</option>
-                <option value="30">30</option>
-              </select>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <button class="pt-print-btn" id="ptPrintBtn" onclick="doPrint()">⎙ Open sheet in new tab</button>
-    </div>
-  </div>
-</div>
 
 <!-- TEST GENERATOR MODAL -->
-<div class="tg-overlay" id="tgOverlay">
-  <div class="tg-modal">
-    <div class="tg-header">
-      <div>
-        <h3 id="tgHeaderTitle">Test Generator</h3>
-        <p id="tgHeaderSub">Choose your parameters, then generate a custom test.</p>
-      </div>
-      <button class="tg-close" onclick="closeTestGen()">✕</button>
-    </div>
-
-    <!-- SETUP PANEL -->
-    <div class="tg-setup" id="tgSetup">
-
-      <h4>CE Level</h4>
-      <div class="tg-row">
-        <div class="tg-chip lvl-L1 selected" data-group="level" data-val="L1" onclick="toggleChip(this)">Level 1</div>
-        <div class="tg-chip lvl-L2 selected" data-group="level" data-val="L2" onclick="toggleChip(this)">Level 2</div>
-        <div class="tg-chip lvl-L3" data-group="level" data-val="L3" onclick="toggleChip(this)">Level 3</div>
-      </div>
-
-      <h4>Word Types to Include</h4>
-      <div class="tg-row">
-        <div class="tg-chip selected" data-group="type" data-val="noun" onclick="toggleChip(this)">Nouns</div>
-        <div class="tg-chip selected" data-group="type" data-val="verb" onclick="toggleChip(this)">Verbs</div>
-        <div class="tg-chip selected" data-group="type" data-val="adjective" onclick="toggleChip(this)">Adjectives</div>
-        <div class="tg-chip" data-group="type" data-val="adverb" onclick="toggleChip(this)">Adverbs</div>
-        <div class="tg-chip" data-group="type" data-val="preposition" onclick="toggleChip(this)">Prepositions</div>
-        <div class="tg-chip" data-group="type" data-val="conjunction" onclick="toggleChip(this)">Conjunctions</div>
-        <div class="tg-chip" data-group="type" data-val="pronoun" onclick="toggleChip(this)">Pronouns</div>
-        <div class="tg-chip" data-group="type" data-val="cardinal" onclick="toggleChip(this)">Numbers</div>
-      </div>
-
-
-      <!-- Advanced filters -->
-      <div class="adv-filters">
-        <button class="adv-toggle" id="tgAdvToggle" onclick="toggleAdv('tg')">
-          <span>&#9658; Advanced: declensions, conjugations, exclude specific words</span>
-          <span class="adv-arrow">&#9660;</span>
-        </button>
-        <div class="adv-body" id="tgAdvBody">
-          <div class="fg">
-            <div class="fg-label">Noun declensions
-              <a onclick="setAllCb('tgNoun',true)">all</a>
-              <a onclick="setAllCb('tgNoun',false)">none</a>
-            </div>
-            <div class="cb-grid">
-              <label class="cb-item"><input type="checkbox" class="tgNoun" data-val="noun 1f" checked onchange="updatePoolInfo()"> 1st f <em>(puella)</em></label>
-              <label class="cb-item"><input type="checkbox" class="tgNoun" data-val="noun 1m" checked onchange="updatePoolInfo()"> 1st m <em>(nauta)</em></label>
-              <label class="cb-item"><input type="checkbox" class="tgNoun" data-val="noun 2m" checked onchange="updatePoolInfo()"> 2nd m <em>(dominus)</em></label>
-              <label class="cb-item"><input type="checkbox" class="tgNoun" data-val="noun 2n" checked onchange="updatePoolInfo()"> 2nd n <em>(bellum)</em></label>
-              <label class="cb-item"><input type="checkbox" class="tgNoun" data-val="noun 3m" checked onchange="updatePoolInfo()"> 3rd m <em>(rex)</em></label>
-              <label class="cb-item"><input type="checkbox" class="tgNoun" data-val="noun 3f" checked onchange="updatePoolInfo()"> 3rd f <em>(mors)</em></label>
-              <label class="cb-item"><input type="checkbox" class="tgNoun" data-val="noun 3n" checked onchange="updatePoolInfo()"> 3rd n <em>(corpus)</em></label>
-              <label class="cb-item"><input type="checkbox" class="tgNoun" data-val="noun 3m/f" checked onchange="updatePoolInfo()"> 3rd m/f <em>(civis)</em></label>
-              <label class="cb-item"><input type="checkbox" class="tgNoun" data-val="noun 4m" checked onchange="updatePoolInfo()"> 4th <em>(exercitus)</em></label>
-              <label class="cb-item"><input type="checkbox" class="tgNoun" data-val="noun 5f" checked onchange="updatePoolInfo()"> 5th <em>(res)</em></label>
-              <label class="cb-item"><input type="checkbox" class="tgNoun" data-val="noun irregular" checked onchange="updatePoolInfo()"> Irregular</label>
-            </div>
-          </div>
-          <div class="fg">
-            <div class="fg-label">Verb conjugations
-              <a onclick="setAllCb('tgVerb',true)">all</a>
-              <a onclick="setAllCb('tgVerb',false)">none</a>
-            </div>
-            <div class="cb-grid">
-              <label class="cb-item"><input type="checkbox" class="tgVerb" data-val="verb 1" checked onchange="updatePoolInfo()"> 1st <em>(amo)</em></label>
-              <label class="cb-item"><input type="checkbox" class="tgVerb" data-val="verb 2" checked onchange="updatePoolInfo()"> 2nd <em>(moneo)</em></label>
-              <label class="cb-item"><input type="checkbox" class="tgVerb" data-val="verb 3" checked onchange="updatePoolInfo()"> 3rd <em>(rego)</em></label>
-              <label class="cb-item"><input type="checkbox" class="tgVerb" data-val="verb 4" checked onchange="updatePoolInfo()"> 4th <em>(audio)</em></label>
-              <label class="cb-item"><input type="checkbox" class="tgVerb" data-val="verb 5 (mixed)" checked onchange="updatePoolInfo()"> Mixed <em>(capio)</em></label>
-              <label class="cb-item"><input type="checkbox" class="tgVerb" data-val="verb irregular" checked onchange="updatePoolInfo()"> Irregular</label>
-            </div>
-          </div>
-          <div class="fg">
-            <div class="fg-label">Adjective types
-              <a onclick="setAllCb('tgAdj',true)">all</a>
-              <a onclick="setAllCb('tgAdj',false)">none</a>
-            </div>
-            <div class="cb-grid">
-              <label class="cb-item"><input type="checkbox" class="tgAdj" data-val="adjective 2-1-2" checked onchange="updatePoolInfo()"> 2-1-2 <em>(bonus)</em></label>
-              <label class="cb-item"><input type="checkbox" class="tgAdj" data-val="adjective 3rd" checked onchange="updatePoolInfo()"> 3rd decl. <em>(fortis)</em></label>
-            </div>
-          </div>
-          <div class="fg">
-            <div class="fg-label">Exclude specific words
-              <a onclick="clearExclusions('tg')">clear all</a>
-            </div>
-            <input type="text" class="excl-search" id="tgExclSearch" placeholder="Search to exclude words..." oninput="renderExclList('tg')">
-            <div class="excl-list" id="tgExclList"></div>
-            <div class="excl-count" id="tgExclCount"></div>
-          </div>
-        </div>
-      </div>
-
-      <h4>Question Types</h4>
-      <div class="tg-row">
-        <div class="tg-chip selected" data-group="qtype" data-val="lat2eng" onclick="toggleChip(this)">Latin → English (word)</div>
-        <div class="tg-chip selected" data-group="qtype" data-val="eng2lat" onclick="toggleChip(this)">English → Latin (word)</div>
-        <div class="tg-chip selected" data-group="qtype" data-val="sentence" onclick="toggleChip(this)">Latin sentence → English</div>
-        <div class="tg-chip" data-group="qtype" data-val="engsentence" onclick="toggleChip(this)">English sentence &#8594; Latin</div>
-        <div class="tg-chip" style="border-color:rgba(184,134,11,0.4);color:var(--gold)" data-group="qtype" data-val="parsing" onclick="toggleChip(this)">&#128269; Grammar &amp; parsing</div>
-      </div>
-
-      <h4>Question Mix &amp; Options</h4>
-      <div class="ratio-grid">
-        <div class="ratio-item"><label>Total questions</label>
-          <input type="number" class="ratio-input" id="tgNumQ" value="20" min="5" max="50"></div>
-        <div class="ratio-item"><label>Sentence difficulty</label>
-          <select class="tg-select" id="tgDifficulty" style="font-size:0.85rem">
-            <option value="simple">Simple</option>
-            <option value="medium" selected>Medium</option>
-            <option value="hard">Challenging</option>
-          </select>
-        </div>
-        <div class="ratio-item"><label>% word questions</label>
-          <input type="number" class="ratio-input" id="tgPctWord" value="60" min="0" max="100" oninput="clampRatios()">
-          <span style="font-size:0.75rem;color:var(--ink-faint)">%</span></div>
-        <div class="ratio-item"><label>% sentence questions</label>
-          <input type="number" class="ratio-input" id="tgPctSent" value="30" min="0" max="100" oninput="clampRatios()">
-          <span style="font-size:0.75rem;color:var(--ink-faint)">%</span></div>
-        <div class="ratio-item"><label>% grammar questions</label>
-          <input type="number" class="ratio-input" id="tgPctGram" value="10" min="0" max="100" oninput="clampRatios()">
-          <span style="font-size:0.75rem;color:var(--ink-faint)">%</span></div>
-      </div>
-      <div class="ratio-note" id="tgRatioNote">Word 60% + Sentence 30% + Grammar 10% = 100%</div>
-
-
-      <div class="tg-pool-info" id="tgPoolInfo">Calculating vocabulary pool…</div>
-
-      <button class="tg-generate-btn" id="tgGenerateBtn" onclick="generateTest()">✦ Generate Test</button>
-    </div>
-
-    <!-- TEST PANEL -->
-    <div class="tg-test" id="tgTest">
-      <div class="tg-progress">
-        <div class="tg-progress-bar"><div class="tg-progress-fill" id="tgProgressFill" style="width:0%"></div></div>
-        <div class="tg-progress-label" id="tgProgressLabel">0 / 0 answered</div>
-      </div>
-      <div class="tg-test-body" id="tgTestBody"></div>
-      <div class="tg-footer">
-        <button class="tg-submit-btn" id="tgSubmitBtn" onclick="markTest()">Mark my test ✓</button>
-        <button class="tg-reset-btn" onclick="resetToSetup()">← New test</button>
-        <span id="tgFooterInfo" style="font-size:0.82rem;color:var(--ink-faint);font-style:italic;margin-left:auto"></span>
-      </div>
-    </div>
-
-  </div>
-</div>
 
 <!-- TRANSLATOR MODAL -->
 <div class="tr-overlay" id="trOverlay">
@@ -2032,9 +1648,7 @@
     </div>
     <div class="header-actions">
       <button class="admin-btn translate-btn" onclick="openTranslator()">⟴ Help me translate…</button>
-      <button class="admin-btn" onclick="openFlashcards()">⬡ Flashcards</button>
-      <button class="admin-btn test-btn" onclick="openTestGen()">✦ Generate a test</button>
-      <button class="admin-btn print-btn" onclick="openPrintTool()">⎙ Print</button>
+      <button class="admin-btn" onclick="switchTab('resources')">📎 Resources</button>
       <button class="admin-btn" id="adminToggle" onclick="promptAdmin()">✎ Edit</button>
     </div>
   </div>
@@ -2074,10 +1688,11 @@
 <div class="tab-bar">
   <button class="tab-btn active" onclick="switchTab('vocab')">📖 Vocabulary</button>
   <button class="tab-btn" onclick="switchTab('grammar')">📐 Grammar Tables</button>
+  <button class="tab-btn" onclick="switchTab('resources')">📎 Resources</button>
 </div>
 
 <main>
-<div id="vocabPanel">
+<div id="vocabPanel" class="tab-panel">
   <div class="form-panel" id="formPanel">
     <h2 id="formTitle">Add New Word</h2>
     <div class="form-grid">
@@ -2131,7 +1746,7 @@
 </div><!-- end vocabPanel -->
 
 <!-- ── GRAMMAR PANEL ── -->
-<div id="grammarPanel">
+<div id="grammarPanel" class="tab-panel" style="display:none">
 
   <!-- NOUNS -->
   <div class="gram-section">
@@ -2144,11 +1759,11 @@
           <thead><tr><th>Case</th><th>Singular</th><th>Plural</th><th>Use</th></tr></thead>
           <tbody>
             <tr><td class="lbl">Nominative</td><td class="lat">puell<b>a</b></td><td class="lat">puell<b>ae</b></td><td class="nt">subject</td></tr>
+            <tr><td class="lbl">Vocative</td><td class="lat">puell<b>a</b></td><td class="lat">puell<b>ae</b></td><td class="nt">addressing</td></tr>
             <tr><td class="lbl">Accusative</td><td class="lat">puell<b>am</b></td><td class="lat">puell<b>as</b></td><td class="nt">object</td></tr>
             <tr><td class="lbl">Genitive</td><td class="lat">puell<b>ae</b></td><td class="lat">puell<b>arum</b></td><td class="nt">of</td></tr>
             <tr><td class="lbl">Dative</td><td class="lat">puell<b>ae</b></td><td class="lat">puell<b>is</b></td><td class="nt">to / for</td></tr>
             <tr><td class="lbl">Ablative</td><td class="lat">puell<b>a</b></td><td class="lat">puell<b>is</b></td><td class="nt">by / with / from</td></tr>
-            <tr><td class="lbl">Vocative</td><td class="lat">puell<b>a</b></td><td class="lat">puell<b>ae</b></td><td class="nt">addressing</td></tr>
           </tbody>
         </table>
         <p class="gram-note">Also masculine: nauta, agricola, poeta, incola</p>
@@ -2160,11 +1775,11 @@
           <thead><tr><th>Case</th><th>Singular</th><th>Plural</th><th>Use</th></tr></thead>
           <tbody>
             <tr><td class="lbl">Nominative</td><td class="lat">domin<b>us</b></td><td class="lat">domin<b>i</b></td><td class="nt">subject</td></tr>
+            <tr><td class="lbl">Vocative</td><td class="lat">domin<b>e</b></td><td class="lat">domin<b>i</b></td><td class="nt">addressing</td></tr>
             <tr><td class="lbl">Accusative</td><td class="lat">domin<b>um</b></td><td class="lat">domin<b>os</b></td><td class="nt">object</td></tr>
             <tr><td class="lbl">Genitive</td><td class="lat">domin<b>i</b></td><td class="lat">domin<b>orum</b></td><td class="nt">of</td></tr>
             <tr><td class="lbl">Dative</td><td class="lat">domin<b>o</b></td><td class="lat">domin<b>is</b></td><td class="nt">to / for</td></tr>
             <tr><td class="lbl">Ablative</td><td class="lat">domin<b>o</b></td><td class="lat">domin<b>is</b></td><td class="nt">by / with / from</td></tr>
-            <tr><td class="lbl">Vocative</td><td class="lat">domin<b>e</b></td><td class="lat">domin<b>i</b></td><td class="nt">addressing</td></tr>
           </tbody>
         </table>
         <p class="gram-note">puer, pueri is irregular — no -us in nom. sg.</p>
@@ -2176,58 +1791,58 @@
           <thead><tr><th>Case</th><th>Singular</th><th>Plural</th><th>Use</th></tr></thead>
           <tbody>
             <tr><td class="lbl">Nominative</td><td class="lat">bell<b>um</b></td><td class="lat">bell<b>a</b></td><td class="nt">subject</td></tr>
+            <tr><td class="lbl">Vocative</td><td class="lat">bell<b>um</b></td><td class="lat">bell<b>a</b></td><td class="nt">addressing</td></tr>
             <tr><td class="lbl">Accusative</td><td class="lat">bell<b>um</b></td><td class="lat">bell<b>a</b></td><td class="nt">object</td></tr>
             <tr><td class="lbl">Genitive</td><td class="lat">bell<b>i</b></td><td class="lat">bell<b>orum</b></td><td class="nt">of</td></tr>
             <tr><td class="lbl">Dative</td><td class="lat">bell<b>o</b></td><td class="lat">bell<b>is</b></td><td class="nt">to / for</td></tr>
             <tr><td class="lbl">Ablative</td><td class="lat">bell<b>o</b></td><td class="lat">bell<b>is</b></td><td class="nt">by / with / from</td></tr>
-            <tr><td class="lbl">Vocative</td><td class="lat">bell<b>um</b></td><td class="lat">bell<b>a</b></td><td class="nt">addressing</td></tr>
           </tbody>
         </table>
         <p class="gram-note">Nom. &amp; acc. always identical in neuters. Nom. pl. always -a.</p>
       </div>
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap" data-ce-min="2">
         <h4>3rd Declension <em style="font-size:0.8rem;color:var(--ink-faint)">(rex, regis m · miles, militis m · corpus, corporis n)</em></h4>
         <table class="gram-table">
           <thead><tr><th>Case</th><th>Sg. (m/f)</th><th>Pl. (m/f)</th><th>Sg. (n)</th><th>Pl. (n)</th></tr></thead>
           <tbody>
             <tr><td class="lbl">Nominative</td><td class="lat">—varies—</td><td class="lat">reg<b>es</b></td><td class="lat">corp<b>us</b></td><td class="lat">corp<b>ora</b></td></tr>
+            <tr><td class="lbl">Vocative</td><td class="lat">—varies—</td><td class="lat">reg<b>es</b></td><td class="lat">corp<b>us</b></td><td class="lat">corp<b>ora</b></td></tr>
             <tr><td class="lbl">Accusative</td><td class="lat">reg<b>em</b></td><td class="lat">reg<b>es</b></td><td class="lat">corp<b>us</b></td><td class="lat">corp<b>ora</b></td></tr>
             <tr><td class="lbl">Genitive</td><td class="lat">reg<b>is</b></td><td class="lat">reg<b>um</b></td><td class="lat">corp<b>oris</b></td><td class="lat">corp<b>orum</b></td></tr>
             <tr><td class="lbl">Dative</td><td class="lat">reg<b>i</b></td><td class="lat">reg<b>ibus</b></td><td class="lat">corp<b>ori</b></td><td class="lat">corp<b>oribus</b></td></tr>
             <tr><td class="lbl">Ablative</td><td class="lat">reg<b>e</b></td><td class="lat">reg<b>ibus</b></td><td class="lat">corp<b>ore</b></td><td class="lat">corp<b>oribus</b></td></tr>
-            <tr><td class="lbl">Vocative</td><td class="lat">—varies—</td><td class="lat">reg<b>es</b></td><td class="lat">corp<b>us</b></td><td class="lat">corp<b>ora</b></td></tr>
           </tbody>
         </table>
         <p class="gram-note">The genitive singular reveals the stem — always learn it! Nom. sg. varies widely.</p>
       </div>
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap" data-ce-min="3">
         <h4>4th Declension <em style="font-size:0.8rem;color:var(--ink-faint)">(exercitus, -us m)</em></h4>
         <table class="gram-table">
           <thead><tr><th>Case</th><th>Singular</th><th>Plural</th></tr></thead>
           <tbody>
             <tr><td class="lbl">Nominative</td><td class="lat">exercit<b>us</b></td><td class="lat">exercit<b>us</b></td></tr>
+            <tr><td class="lbl">Vocative</td><td class="lat">exercit<b>us</b></td><td class="lat">exercit<b>us</b></td></tr>
             <tr><td class="lbl">Accusative</td><td class="lat">exercit<b>um</b></td><td class="lat">exercit<b>us</b></td></tr>
             <tr><td class="lbl">Genitive</td><td class="lat">exercit<b>us</b></td><td class="lat">exercit<b>uum</b></td></tr>
             <tr><td class="lbl">Dative</td><td class="lat">exercit<b>ui</b></td><td class="lat">exercit<b>ibus</b></td></tr>
             <tr><td class="lbl">Ablative</td><td class="lat">exercit<b>u</b></td><td class="lat">exercit<b>ibus</b></td></tr>
-            <tr><td class="lbl">Vocative</td><td class="lat">exercit<b>us</b></td><td class="lat">exercit<b>us</b></td></tr>
           </tbody>
         </table>
       </div>
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap" data-ce-min="3">
         <h4>5th Declension <em style="font-size:0.8rem;color:var(--ink-faint)">(res, rei f · dies, diei m)</em></h4>
         <table class="gram-table">
           <thead><tr><th>Case</th><th>Singular</th><th>Plural</th></tr></thead>
           <tbody>
             <tr><td class="lbl">Nominative</td><td class="lat">r<b>es</b></td><td class="lat">r<b>es</b></td></tr>
+            <tr><td class="lbl">Vocative</td><td class="lat">r<b>es</b></td><td class="lat">r<b>es</b></td></tr>
             <tr><td class="lbl">Accusative</td><td class="lat">r<b>em</b></td><td class="lat">r<b>es</b></td></tr>
             <tr><td class="lbl">Genitive</td><td class="lat">r<b>ei</b></td><td class="lat">r<b>erum</b></td></tr>
             <tr><td class="lbl">Dative</td><td class="lat">r<b>ei</b></td><td class="lat">r<b>ebus</b></td></tr>
             <tr><td class="lbl">Ablative</td><td class="lat">r<b>e</b></td><td class="lat">r<b>ebus</b></td></tr>
-            <tr><td class="lbl">Vocative</td><td class="lat">r<b>es</b></td><td class="lat">r<b>es</b></td></tr>
           </tbody>
         </table>
         <p class="gram-note">CE words: res, dies, spes, fides</p>
@@ -2237,7 +1852,7 @@
   </div>
 
   <!-- ADJECTIVES -->
-  <div class="gram-section">
+  <div class="gram-section" data-ce-min="2">
     <div class="gram-section-title">Adjectives <span>2-1-2 and 3rd declension</span></div>
     <div class="gram-grid">
 
@@ -2247,33 +1862,33 @@
           <thead><tr><th>Case</th><th>M sg</th><th>F sg</th><th>N sg</th><th>M pl</th><th>F pl</th><th>N pl</th></tr></thead>
           <tbody>
             <tr><td class="lbl">Nom.</td><td class="lat">bon<b>us</b></td><td class="lat">bon<b>a</b></td><td class="lat">bon<b>um</b></td><td class="lat">bon<b>i</b></td><td class="lat">bon<b>ae</b></td><td class="lat">bon<b>a</b></td></tr>
+            <tr><td class="lbl">Voc.</td><td class="lat">bon<b>e</b></td><td class="lat">bon<b>a</b></td><td class="lat">bon<b>um</b></td><td class="lat">bon<b>i</b></td><td class="lat">bon<b>ae</b></td><td class="lat">bon<b>a</b></td></tr>
             <tr><td class="lbl">Acc.</td><td class="lat">bon<b>um</b></td><td class="lat">bon<b>am</b></td><td class="lat">bon<b>um</b></td><td class="lat">bon<b>os</b></td><td class="lat">bon<b>as</b></td><td class="lat">bon<b>a</b></td></tr>
             <tr><td class="lbl">Gen.</td><td class="lat">bon<b>i</b></td><td class="lat">bon<b>ae</b></td><td class="lat">bon<b>i</b></td><td class="lat">bon<b>orum</b></td><td class="lat">bon<b>arum</b></td><td class="lat">bon<b>orum</b></td></tr>
             <tr><td class="lbl">Dat.</td><td class="lat">bon<b>o</b></td><td class="lat">bon<b>ae</b></td><td class="lat">bon<b>o</b></td><td class="lat">bon<b>is</b></td><td class="lat">bon<b>is</b></td><td class="lat">bon<b>is</b></td></tr>
             <tr><td class="lbl">Abl.</td><td class="lat">bon<b>o</b></td><td class="lat">bon<b>a</b></td><td class="lat">bon<b>o</b></td><td class="lat">bon<b>is</b></td><td class="lat">bon<b>is</b></td><td class="lat">bon<b>is</b></td></tr>
-            <tr><td class="lbl">Voc.</td><td class="lat">bon<b>e</b></td><td class="lat">bon<b>a</b></td><td class="lat">bon<b>um</b></td><td class="lat">bon<b>i</b></td><td class="lat">bon<b>ae</b></td><td class="lat">bon<b>a</b></td></tr>
           </tbody>
         </table>
         <p class="gram-note">M follows 2nd decl. masc.; F follows 1st decl.; N follows 2nd decl. neuter.</p>
       </div>
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap" data-ce-min="2">
         <h4>3rd Declension Adjective <em style="font-size:0.8rem;color:var(--ink-faint)">(fortis, forte · ingens, ingentis)</em></h4>
         <table class="gram-table">
           <thead><tr><th>Case</th><th>M/F sg</th><th>N sg</th><th>M/F pl</th><th>N pl</th></tr></thead>
           <tbody>
             <tr><td class="lbl">Nom.</td><td class="lat">fort<b>is</b></td><td class="lat">fort<b>e</b></td><td class="lat">fort<b>es</b></td><td class="lat">fort<b>ia</b></td></tr>
+            <tr><td class="lbl">Voc.</td><td class="lat">fort<b>is</b></td><td class="lat">fort<b>e</b></td><td class="lat">fort<b>es</b></td><td class="lat">fort<b>ia</b></td></tr>
             <tr><td class="lbl">Acc.</td><td class="lat">fort<b>em</b></td><td class="lat">fort<b>e</b></td><td class="lat">fort<b>es</b></td><td class="lat">fort<b>ia</b></td></tr>
             <tr><td class="lbl">Gen.</td><td class="lat">fort<b>is</b></td><td class="lat">fort<b>is</b></td><td class="lat">fort<b>ium</b></td><td class="lat">fort<b>ium</b></td></tr>
             <tr><td class="lbl">Dat.</td><td class="lat">fort<b>i</b></td><td class="lat">fort<b>i</b></td><td class="lat">fort<b>ibus</b></td><td class="lat">fort<b>ibus</b></td></tr>
             <tr><td class="lbl">Abl.</td><td class="lat">fort<b>i</b></td><td class="lat">fort<b>i</b></td><td class="lat">fort<b>ibus</b></td><td class="lat">fort<b>ibus</b></td></tr>
-            <tr><td class="lbl">Voc.</td><td class="lat">fort<b>is</b></td><td class="lat">fort<b>e</b></td><td class="lat">fort<b>es</b></td><td class="lat">fort<b>ia</b></td></tr>
           </tbody>
         </table>
         <p class="gram-note">ingens (one ending): nom. sg. ingens, gen. ingentis — same endings from gen. onward.</p>
       </div>
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap" data-ce-min="2">
         <h4>Comparison of Adjectives</h4>
         <table class="gram-table">
           <thead><tr><th>Positive</th><th>Comparative</th><th>Superlative</th></tr></thead>
@@ -2299,7 +1914,7 @@
     <div class="gram-section-title">Pronouns <span>CE prescribed forms</span></div>
     <div class="gram-grid">
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap" data-ce-min="2">
         <h4>Personal Pronouns — ego / tu / nos / vos</h4>
         <table class="gram-table">
           <thead><tr><th>Case</th><th>I</th><th>you (sg.)</th><th>we</th><th>you (pl.)</th></tr></thead>
@@ -2313,7 +1928,7 @@
         </table>
       </div>
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap" data-ce-min="2">
         <h4>is, ea, id — he / she / it / they</h4>
         <table class="gram-table">
           <thead><tr><th>Case</th><th>M sg</th><th>F sg</th><th>N sg</th><th>M pl</th><th>F pl</th><th>N pl</th></tr></thead>
@@ -2327,7 +1942,7 @@
         </table>
       </div>
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap" data-ce-min="3">
         <h4>hic / ille / ipse / idem</h4>
         <table class="gram-table">
           <thead><tr><th>Case</th><th colspan="3" class="c">hic, haec, hoc (this)</th><th colspan="3" class="c">ille, illa, illud (that)</th></tr>
@@ -2347,12 +1962,14 @@
         </table>
       </div>
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap" data-ce-min="3">
         <h4>Reflexive — se &nbsp;·&nbsp; Relative — qui, quae, quod</h4>
         <table class="gram-table">
           <thead><tr><th>Case</th><th colspan="3" class="c">qui / quae / quod (who, which)</th></tr>
           <tr><th></th><th class="c">M</th><th class="c">F</th><th class="c">N</th></tr></thead>
           <tbody>
+            <tr><td class="lbl">Gen.</td><td class="lat" colspan="3">sui</td></tr>
+            <tr><td class="lbl">Dat.</td><td class="lat" colspan="3">sibi</td></tr>
             <tr><td class="lbl">Nom. sg.</td><td class="lat c">qui</td><td class="lat c">quae</td><td class="lat c">quod</td></tr>
             <tr><td class="lbl">Acc. sg.</td><td class="lat c">quem</td><td class="lat c">quam</td><td class="lat c">quod</td></tr>
             <tr><td class="lbl">Gen. sg.</td><td class="lat c">cuius</td><td class="lat c">cuius</td><td class="lat c">cuius</td></tr>
@@ -2363,10 +1980,7 @@
             <tr><td class="lbl">Gen. pl.</td><td class="lat c">quorum</td><td class="lat c">quarum</td><td class="lat c">quorum</td></tr>
             <tr><td class="lbl">Dat. pl.</td><td class="lat c">quibus</td><td class="lat c">quibus</td><td class="lat c">quibus</td></tr>
             <tr><td class="lbl">Abl. pl.</td><td class="lat c">quibus</td><td class="lat c">quibus</td><td class="lat c">quibus</td></tr>
-            <tr class="sub"><td colspan="4">se — reflexive pronoun</td></tr>
             <tr><td class="lbl">Acc./Abl.</td><td class="lat" colspan="3">se (himself / herself / themselves)</td></tr>
-            <tr><td class="lbl">Gen.</td><td class="lat" colspan="3">sui</td></tr>
-            <tr><td class="lbl">Dat.</td><td class="lat" colspan="3">sibi</td></tr>
           </tbody>
         </table>
       </div>
@@ -2426,7 +2040,7 @@
         <p class="gram-note">Perfect stem = 3rd principal part (amaVI → amav-). Endings are the same for ALL conjugations.</p>
       </div>
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap" data-ce-min="2">
         <h4>Future tense <em style="font-size:0.8rem;color:var(--ink-faint)">(will —)</em></h4>
         <table class="gram-table">
           <thead><tr><th></th><th class="c">1st &amp; 2nd</th><th class="c">3rd, 4th &amp; Mixed</th></tr></thead>
@@ -2442,7 +2056,7 @@
         <p class="gram-note">Watch out: reg<b>am</b> (future) vs reg<b>ebam</b> (imperfect). 1st/2nd use -b- marker; 3rd/4th use -e-/-a-.</p>
       </div>
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap" data-ce-min="2">
         <h4>Pluperfect tense <em style="font-size:0.8rem;color:var(--ink-faint)">(had —ed)</em></h4>
         <table class="gram-table">
           <thead><tr><th></th><th class="c">All conjugations<br><em style="font-weight:400;font-style:italic">(perfect stem + erat endings)</em></th></tr></thead>
@@ -2457,7 +2071,7 @@
         </table>
       </div>
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap" data-ce-min="3">
         <h4>Passive — Present &amp; Imperfect <em style="font-size:0.8rem;color:var(--ink-faint)">(L3)</em></h4>
         <table class="gram-table">
           <thead><tr><th></th><th class="c">Present passive<br><em style="font-weight:400">1st conj.</em></th><th class="c">Imperfect passive<br><em style="font-weight:400">1st conj.</em></th></tr></thead>
@@ -2477,7 +2091,7 @@
   </div>
 
   <!-- IRREGULAR VERBS -->
-  <div class="gram-section">
+  <div class="gram-section" data-ce-min="2">
     <div class="gram-section-title">Irregular Verbs <span>sum, possum, eo, fero, volo, nolo</span></div>
     <div class="gram-grid">
 
@@ -2496,7 +2110,7 @@
         </table>
       </div>
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap" data-ce-min="2">
         <h4>possum — I am able</h4>
         <table class="gram-table">
           <thead><tr><th></th><th class="c">Present</th><th class="c">Imperfect</th><th class="c">Perfect</th></tr></thead>
@@ -2512,7 +2126,7 @@
         <p class="gram-note">pos + sum forms with consonant; pot + sum forms with vowel.</p>
       </div>
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap" data-ce-min="3">
         <h4>eo — I go &nbsp;·&nbsp; volo — I want &nbsp;·&nbsp; nolo — I do not want</h4>
         <table class="gram-table">
           <thead><tr><th></th><th class="c">eo (pres.)</th><th class="c">volo (pres.)</th><th class="c">nolo (pres.)</th></tr></thead>
@@ -2528,7 +2142,7 @@
         <p class="gram-note">Compounds of eo: adeo, exeo, ineo, redeo, transeo — same endings.</p>
       </div>
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap" data-ce-min="3">
         <h4>fero — I carry / bring</h4>
         <table class="gram-table">
           <thead><tr><th></th><th class="c">Present</th><th class="c">Imperfect</th><th class="c">Perfect</th></tr></thead>
@@ -2558,17 +2172,17 @@
           <thead><tr><th>Latin</th><th>English</th><th>Level</th></tr></thead>
           <tbody>
             <tr><td class="lat">ad</td><td>to, towards</td><td class="nt">L1</td></tr>
-            <tr><td class="lat">ante</td><td>before</td><td class="nt">L2</td></tr>
-            <tr><td class="lat">circum</td><td>around</td><td class="nt">L2</td></tr>
+            <tr data-ce-min="2"><td class="lat">ante</td><td>before</td><td class="nt">L2</td></tr>
+            <tr data-ce-min="2"><td class="lat">circum</td><td>around</td><td class="nt">L2</td></tr>
             <tr><td class="lat">contra</td><td>against</td><td class="nt">L1</td></tr>
             <tr><td class="lat">in</td><td>into (motion)</td><td class="nt">L1</td></tr>
-            <tr><td class="lat">inter</td><td>among, between</td><td class="nt">L2</td></tr>
+            <tr data-ce-min="2"><td class="lat">inter</td><td>among, between</td><td class="nt">L2</td></tr>
             <tr><td class="lat">per</td><td>through, along</td><td class="nt">L1</td></tr>
-            <tr><td class="lat">post</td><td>after</td><td class="nt">L2</td></tr>
+            <tr data-ce-min="2"><td class="lat">post</td><td>after</td><td class="nt">L2</td></tr>
             <tr><td class="lat">prope</td><td>near</td><td class="nt">L1</td></tr>
-            <tr><td class="lat">propter</td><td>because of</td><td class="nt">L2</td></tr>
-            <tr><td class="lat">sub</td><td>under (motion)</td><td class="nt">L2</td></tr>
-            <tr><td class="lat">super</td><td>above</td><td class="nt">L2</td></tr>
+            <tr data-ce-min="2"><td class="lat">propter</td><td>because of</td><td class="nt">L2</td></tr>
+            <tr data-ce-min="2"><td class="lat">sub</td><td>under (motion)</td><td class="nt">L2</td></tr>
+            <tr data-ce-min="2"><td class="lat">super</td><td>above</td><td class="nt">L2</td></tr>
             <tr><td class="lat">trans</td><td>across</td><td class="nt">L1</td></tr>
           </tbody>
         </table>
@@ -2584,9 +2198,9 @@
             <tr><td class="lat">de</td><td>down from, about</td><td class="nt">L1</td></tr>
             <tr><td class="lat">e / ex</td><td>out of</td><td class="nt">L1</td></tr>
             <tr><td class="lat">in</td><td>in, on (position)</td><td class="nt">L1</td></tr>
-            <tr><td class="lat">pro</td><td>for, on behalf of</td><td class="nt">L2</td></tr>
-            <tr><td class="lat">sine</td><td>without</td><td class="nt">L2</td></tr>
-            <tr><td class="lat">sub</td><td>under (position)</td><td class="nt">L2</td></tr>
+            <tr data-ce-min="2"><td class="lat">pro</td><td>for, on behalf of</td><td class="nt">L2</td></tr>
+            <tr data-ce-min="2"><td class="lat">sine</td><td>without</td><td class="nt">L2</td></tr>
+            <tr data-ce-min="2"><td class="lat">sub</td><td>under (position)</td><td class="nt">L2</td></tr>
           </tbody>
         </table>
         <p class="gram-note"><strong>in</strong> and <strong>sub</strong> take accusative with motion verbs, ablative with position verbs.</p>
@@ -2641,11 +2255,11 @@
           <thead><tr><th>Case</th><th>Main uses</th></tr></thead>
           <tbody>
             <tr><td class="lbl">Nominative</td><td>Subject of the verb</td></tr>
+            <tr><td class="lbl">Vocative</td><td>Addressing someone directly</td></tr>
             <tr><td class="lbl">Accusative</td><td>Direct object; with most prepositions; extent of time/space</td></tr>
             <tr><td class="lbl">Genitive</td><td>Possession ("of") — domus regis = the king's house</td></tr>
             <tr><td class="lbl">Dative</td><td>Indirect object ("to/for"); with certain verbs</td></tr>
             <tr><td class="lbl">Ablative</td><td>Instrument/manner ("by/with"); separation ("from"); with prepositions; ablative absolute</td></tr>
-            <tr><td class="lbl">Vocative</td><td>Addressing someone directly</td></tr>
           </tbody>
         </table>
       </div>
@@ -2670,7 +2284,50 @@
     </div>
   </div>
 
-</div><!-- end grammarPanel -->
+</div>
+
+<div id="resourcesPanel" class="tab-panel" style="display:none">
+  <div class="res-intro">
+    <h2 style="font-family:'Cinzel',serif;font-size:1.4rem;color:var(--gold-light);margin-bottom:6px">📎 Latin Resources</h2>
+    <p style="color:var(--ink-faint);font-size:0.9rem;margin-bottom:24px">Useful external links for vocabulary practice, grammar exercises, and revision.</p>
+  </div>
+
+  <div class="res-grid">
+    <div class="res-card">
+      <div class="res-card-icon">🔵</div>
+      <div class="res-card-body">
+        <h3>Quizlet</h3>
+        <p>Flashcard sets for CE Latin vocabulary, organised by level.</p>
+        <div class="res-links" id="quizletLinks">
+          <span class="res-placeholder">Links coming soon — check back shortly.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-icon">🟣</div>
+      <div class="res-card-body">
+        <h3>Wordwall</h3>
+        <p>Interactive games and activities for Latin vocabulary and grammar.</p>
+        <div class="res-links" id="wordwallLinks">
+          <span class="res-placeholder">Links coming soon — check back shortly.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="res-card-icon">📗</div>
+      <div class="res-card-body">
+        <h3>Other Resources</h3>
+        <p>Additional practice materials and reference guides.</p>
+        <div class="res-links" id="otherLinks">
+          <span class="res-placeholder">Links coming soon — check back shortly.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- end grammarPanel -->
 
 </main>
 
@@ -3193,7 +2850,10 @@ function renderTable() {
     const wtype = w.type.toLowerCase();
     const matchType = !ft || wtype.includes(ft);
     const matchSub = !fsub || wtype === fsub || wtype.includes(fsub);
-    const matchLevel = !fl || w.level === fl;
+    const ceLevel = window._ceLevel || 3;
+    const levelNum = {'L1':1,'L2':2,'L3':3}[w.level] || 1;
+    const matchCE = levelNum <= ceLevel;
+    const matchLevel = (!fl || w.level === fl) && matchCE;
     return matchSearch && matchType && matchSub && matchLevel;
   });
 
@@ -3357,7 +3017,9 @@ function deleteWord(idx) {
 }
 
 // ── TRANSLATOR ──
+let trHistory = [];
 let trSentence = '';
+let trBusy = false;
 let trDirection = 'lat2eng';
 
 function setTrDirection(dir) {
@@ -3379,1708 +3041,277 @@ function openTranslator() {
   document.getElementById('trOverlay').classList.add('open');
   document.getElementById('trSentenceInput').focus();
 }
+
 function closeTranslator() {
   document.getElementById('trOverlay').classList.remove('open');
 }
+
 document.getElementById('trOverlay').addEventListener('click', e => {
   if (e.target === document.getElementById('trOverlay')) closeTranslator();
 });
 
-// ================================================================
-//  SCRIPTED TRANSLATION COACH  —  no API calls required
-// ================================================================
+async function startTranslation() {
+  const input = document.getElementById('trSentenceInput').value.trim();
+  if (!input) return;
+  trSentence = input;
+  trHistory = [];
 
-// ── Person labels ──────────────────────────────────────────────
-const PERSON_LABEL = {
-  s1:'1st person singular (I)',
-  s2:'2nd person singular (you)',
-  s3:'3rd person singular (he / she / it)',
-  p1:'1st person plural (we)',
-  p2:'2nd person plural (you all)',
-  p3:'3rd person plural (they)',
-};
+  // Clear chat — rebuild empty state and typing indicator cleanly
+  const chat = document.getElementById('trChat');
+  chat.innerHTML = `<div class="tr-typing" id="trTyping">Magister is thinking…</div>`;
 
-// ── Irregular present-tense forms → person code ───────────────
-const IRR_FORMS = {
-  sum:'s1', es:'s2', est:'s3', sumus:'p1', estis:'p2', sunt:'p3',
-  adsum:'s1', ades:'s2', adest:'s3', adsumus:'p1', adestis:'p2', adsunt:'p3',
-  absum:'s1', abes:'s2', abest:'s3', absumus:'p1', abestis:'p2', absunt:'p3',
-  possum:'s1', potes:'s2', potest:'s3', possumus:'p1', potestis:'p2', possunt:'p3',
-  eo:'s1', it:'s3', imus:'p1', eunt:'p3',
-  volo:'s1', vis:'s2', vult:'s3', volumus:'p1', vultis:'p2', volunt:'p3',
-  nolo:'s1', nolumus:'p1', nolunt:'p3',
-  fero:'s1', fers:'s2', fert:'s3', ferimus:'p1', fertis:'p2', ferunt:'p3',
-};
-
-// ── Verb ending table — longest endings first ─────────────────
-// Each entry: { end, code, conj }
-const VERB_ENDINGS = [
-  { end:'amus', code:'p1', conj:1 }, { end:'atis', code:'p2', conj:1 },
-  { end:'emus', code:'p1', conj:2 }, { end:'etis', code:'p2', conj:2 },
-  { end:'imus', code:'p1', conj:3 }, { end:'itis', code:'p2', conj:3 },
-  { end:'iunt', code:'p3', conj:4 },
-  { end:'ant',  code:'p3', conj:1 }, { end:'ent',  code:'p3', conj:2 },
-  { end:'unt',  code:'p3', conj:3 },
-  { end:'as',   code:'s2', conj:1 }, { end:'es',   code:'s2', conj:2 },
-  { end:'at',   code:'s3', conj:1 }, { end:'et',   code:'s3', conj:2 },
-  { end:'it',   code:'s3', conj:3 },
-  { end:'eo',   code:'s1', conj:2 }, { end:'io',   code:'s1', conj:4 },
-  { end:'o',    code:'s1', conj:1 },
-];
-
-// ── Morphology helpers ─────────────────────────────────────────
-function stripPunct(w) {
-  return w.toLowerCase().replace(/[.,!?;:"""]/g, '').trim();
-}
-
-function lookupWord(raw) {
-  const w = stripPunct(raw);
-  return vocab.find(v => {
-    const forms = v.latin.toLowerCase().split(/[,/ ]+/).map(s => s.trim()).filter(Boolean);
-    return forms.some(f => f === w);
-  }) || null;
-}
-
-function detectVerb(raw) {
-  const w = stripPunct(raw);
-  if (!w) return null;
-  if (IRR_FORMS[w]) {
-    const code = IRR_FORMS[w];
-    return { person: code, label: PERSON_LABEL[code], ending: w, conj: 'irr' };
-  }
-  for (const { end, code, conj } of VERB_ENDINGS) {
-    if (w.endsWith(end) && w.length > end.length + 1) {
-      return { person: code, label: PERSON_LABEL[code], ending: end, conj };
-    }
-  }
-  return null;
-}
-
-function detectCase(raw) {
-  const w = stripPunct(raw);
-  if (!w) return null;
-  // Check accusative first — more distinctive endings
-  if (w.endsWith('am') && w.length > 2) return { case:'accusative', number:'singular', note:'1st decl. acc. sing. (-am)' };
-  if (w.endsWith('em') && w.length > 2) return { case:'accusative', number:'singular', note:'3rd decl. acc. sing. (-em)' };
-  if (w.endsWith('os') && w.length > 2) return { case:'accusative', number:'plural',   note:'2nd decl. acc. pl. (-os)' };
-  if (w.endsWith('um') && w.length > 2) return { case:'accusative', number:'singular', note:'2nd decl. acc. sing. (-um)' };
-  if (w.endsWith('as') && w.length > 2) return { case:'accusative', number:'plural',   note:'1st decl. acc. pl. (-as)' };
-  // Then nominative
-  if (w.endsWith('ae') && w.length > 2) return { case:'nominative', number:'plural',   note:'1st decl. nom. pl. (-ae)' };
-  if (w.endsWith('us') && w.length > 2) return { case:'nominative', number:'singular', note:'2nd decl. nom. sing. (-us)' };
-  if (w.endsWith('er') && w.length > 2) return { case:'nominative', number:'singular', note:'2nd decl. nom. sing. (-er)' };
-  if (w.endsWith('i')  && w.length > 2) return { case:'nominative', number:'plural',   note:'2nd decl. nom. pl. (-i)' };
-  if (w.endsWith('a')  && w.length > 1) return { case:'nominative', number:'singular', note:'1st decl. nom. sing. (-a)' };
-  if (w.endsWith('es') && w.length > 2) return { case:'nominative', number:'plural',   note:'3rd decl. nom./acc. pl. (-es)' };
-  return null;
-}
-
-function parseSentence(sentence) {
-  const words = sentence.trim().split(/\s+/).map(raw => {
-    const verb   = detectVerb(raw);
-    const caseI  = verb ? null : detectCase(raw);
-    const vocabE = lookupWord(raw);
-    return { raw, word: stripPunct(raw), verb, caseInfo: caseI, vocab: vocabE };
-  });
-  return {
-    words,
-    verbs:    words.filter(w => w.verb),
-    subjects: words.filter(w => !w.verb && w.caseInfo && w.caseInfo.case === 'nominative'),
-    objects:  words.filter(w => !w.verb && w.caseInfo && w.caseInfo.case === 'accusative'),
-    other:    words.filter(w => !w.verb && !w.caseInfo),
-  };
-}
-
-// ── Coach state ───────────────────────────────────────────────
-let coach = { steps: [], stepIdx: 0, attempts: 0, parsed: null };
-
-// ── Latin → English step builder ─────────────────────────────
-function buildLatEngSteps(sentence, parsed) {
-  const steps = [];
-  const v = parsed.verbs[0];
-  const s = parsed.subjects[0];
-  const o = parsed.objects[0];
-  const extra = parsed.other.filter(t => t.vocab);
-
-  // STEP: find the verb
-  if (v) {
-    steps.push({
-      id: 'find_verb',
-      ask: () =>
-        `First, let's find the <strong>main verb</strong> — the word telling us what is happening.<br><br>` +
-        `Latin verbs have personal endings. Look for:<br>` +
-        `<div style="font-size:0.85rem;line-height:2;margin:6px 0 10px">` +
-        `Verb 1: <strong>-o, -as, -at, -amus, -atis, -ant</strong><br>` +
-        `Verb 2: <strong>-eo, -es, -et, -emus, -etis, -ent</strong><br>` +
-        `Verb 3: <strong>-o, -is, -it, -imus, -itis, -unt</strong><br>` +
-        `Verb 4: <strong>-io, -is, -it, -imus, -itis, -iunt</strong></div>` +
-        `Look at each word in <em>${esc(sentence)}</em>. Which word has one of those endings?`,
-      check: ans => parsed.verbs.some(vv => vv.word === stripPunct(ans)),
-      hint1: () =>
-        `Look at the <strong>last 2–3 letters</strong> of each word. ` +
-        `Singular verbs end in <strong>-at, -et, -it</strong>. ` +
-        `Plural verbs end in <strong>-ant, -ent, -unt, -iunt</strong>. Which word ends like that?`,
-      hint2: () =>
-        `The verb is <em>${esc(v.word)}</em> — ending <strong>-${v.verb.ending}</strong>. ` +
-        `Type it and we'll work out what the ending tells us.`,
-      correct: () =>
-        `Good — <em>${esc(v.word)}</em> is the verb. ` +
-        (v.verb.conj !== 'irr'
-          ? `The ending <strong>-${v.verb.ending}</strong> tells us this is <strong>${v.verb.label}</strong>.`
-          : `It is an irregular form — ${v.verb.label}.`),
-      wrongMsg: () =>
-        `That's not the verb. Look for an ending like <strong>-at, -ant, -et, -ent, -it, -unt</strong>.`,
-    });
-
-    // STEP: singular or plural?
-    const isPlural = ['p1','p2','p3'].includes(v.verb.person);
-    steps.push({
-      id: 'verb_number',
-      ask: () =>
-        `The verb is <em>${esc(v.word)}</em>, with the ending <strong>-${v.verb.ending}</strong>.<br><br>` +
-        `Is that a <strong>singular</strong> ending (one person doing it) or a <strong>plural</strong> ending (more than one)?`,
-      check: ans => {
-        const a = ans.toLowerCase();
-        const saidSing = /sing|one|he|she|it\b/.test(a);
-        const saidPlur = /plur|they|we|more|many/.test(a);
-        return isPlural ? saidPlur : saidSing;
-      },
-      hint1: () =>
-        `Short endings like <strong>-at, -et, -it</strong> are singular. ` +
-        `Longer endings like <strong>-ant, -ent, -unt, -iunt</strong> are plural. ` +
-        `Which category does <strong>-${v.verb.ending}</strong> fall into?`,
-      hint2: () =>
-        `<strong>-${v.verb.ending}</strong> is <strong>${isPlural ? 'plural' : 'singular'}</strong>. ` +
-        `This verb describes what ${isPlural ? 'more than one person or thing is' : 'one person or thing is'} doing.`,
-      correct: () =>
-        `Exactly — <strong>${isPlural ? 'plural' : 'singular'}</strong>, so this is <strong>${v.verb.label}</strong>. ` +
-        `Now let's find the subject.`,
-      wrongMsg: () =>
-        `Short endings (-at/-et/-it) = singular. Longer endings (-ant/-ent/-unt) = plural. ` +
-        `Which is <strong>-${v.verb.ending}</strong>?`,
-    });
-  }
-
-  // STEP: find the subject
-  if (s) {
-    const verbPlural = v && ['p1','p2','p3'].includes(v.verb.person);
-    steps.push({
-      id: 'find_subject',
-      ask: () =>
-        `Now find the <strong>subject</strong> — who or what is doing the action.<br><br>` +
-        `Subjects are in the <strong>nominative case</strong>. Nominative endings:<br>` +
-        `<div style="font-size:0.85rem;line-height:2;margin:6px 0 10px">` +
-        `1st decl.: <strong>-a</strong> (sing.) &nbsp;·&nbsp; <strong>-ae</strong> (pl.)<br>` +
-        `2nd decl.: <strong>-us / -er</strong> (sing.) &nbsp;·&nbsp; <strong>-i</strong> (pl.)<br>` +
-        `Neuter: <strong>-um</strong> (sing.) &nbsp;·&nbsp; <strong>-a</strong> (pl.)</div>` +
-        (v ? `The verb is <strong>${verbPlural ? 'plural' : 'singular'}</strong>, so look for a <strong>${verbPlural ? 'plural' : 'singular'} nominative</strong>. ` : '') +
-        `Which word in <em>${esc(sentence)}</em> is the subject?`,
-      check: ans => parsed.subjects.some(ss => ss.word === stripPunct(ans)),
-      hint1: () =>
-        (verbPlural
-          ? `Since the verb is plural, the subject ending will be plural too — look for <strong>-ae</strong> (1st decl.) or <strong>-i</strong> (2nd decl.).`
-          : `Since the verb is singular, look for a singular nominative ending — <strong>-a</strong> (1st decl.) or <strong>-us/-er</strong> (2nd decl.).`),
-      hint2: () =>
-        `The subject is <em>${esc(s.word)}</em> — ${s.caseInfo.note}. Type it.`,
-      correct: () =>
-        `Well spotted — <em>${esc(s.word)}</em> is the subject (${s.caseInfo.note}). ` +
-        (s.vocab ? `What does <em>${esc(s.word)}</em> mean in English?` : `Good.`),
-      wrongMsg: () =>
-        `Not quite. The subject (nominative) ends in <strong>-a, -ae, -us, -er, -i</strong>. Which word fits?`,
-    });
-
-    // STEP: subject meaning
-    if (s.vocab) {
-      const eng = s.vocab.english;
-      const keys = eng.toLowerCase().split(/[\s,/]+/).filter(w => w.length > 2 && !['the','and','for','from','with','away'].includes(w));
-      steps.push({
-        id: 'subject_meaning',
-        ask: () => `What does <em>${esc(s.word)}</em> mean in English?`,
-        check: ans => keys.some(k => ans.toLowerCase().includes(k)),
-        hint1: () => `Look up <em>${esc(s.word)}</em> in your vocabulary list — it is a ${s.vocab.type}.`,
-        hint2: () =>
-          `<em>${esc(s.word)}</em> means <strong>${esc(eng)}</strong>` +
-          (s.caseInfo.number === 'plural' ? ` — it is plural here, so think of it as "${esc(eng.replace(/^(a |the |I )?/, ''))}s".` : '.'),
-        correct: () =>
-          (s.caseInfo.number === 'plural'
-            ? `Good — and remember it's <strong>plural</strong> here: "${esc(eng.replace(/^(a |the |I )?/, ''))}s". `
-            : `Good. `) +
-          (o ? `Now let's find the object.` : `Now let's put it all together.`),
-        wrongMsg: () => `Look up <em>${esc(s.word)}</em> in your vocabulary list.`,
-      });
-    }
-  }
-
-  // STEP: find the object
-  if (o) {
-    steps.push({
-      id: 'find_object',
-      ask: () =>
-        `Now find the <strong>direct object</strong> — the person or thing the action is done <em>to</em>.<br><br>` +
-        `Objects are in the <strong>accusative case</strong>. Accusative endings:<br>` +
-        `<div style="font-size:0.85rem;line-height:2;margin:6px 0 10px">` +
-        `1st decl.: <strong>-am</strong> (sing.) &nbsp;·&nbsp; <strong>-as</strong> (pl.)<br>` +
-        `2nd decl.: <strong>-um</strong> (sing.) &nbsp;·&nbsp; <strong>-os</strong> (pl.)<br>` +
-        `3rd decl.: <strong>-em</strong> (sing.) &nbsp;·&nbsp; <strong>-es</strong> (pl.)</div>` +
-        `Which word in <em>${esc(sentence)}</em> is the object?`,
-      check: ans => parsed.objects.some(oo => oo.word === stripPunct(ans)),
-      hint1: () =>
-        `Look for accusative endings: <strong>-am, -um, -em</strong> (singular) or <strong>-as, -os, -es</strong> (plural). ` +
-        `The object is what's being acted upon.`,
-      hint2: () =>
-        `The object is <em>${esc(o.word)}</em> — ${o.caseInfo.note}. Type it.`,
-      correct: () =>
-        `Correct — <em>${esc(o.word)}</em> is the object (${o.caseInfo.note}). ` +
-        (o.vocab ? `What does <em>${esc(o.word)}</em> mean in English?` : `Good.`),
-      wrongMsg: () =>
-        `Not the object. Accusative endings are <strong>-am, -um, -em, -as, -os</strong>. Which word has one of those?`,
-    });
-
-    // STEP: object meaning
-    if (o.vocab) {
-      const eng = o.vocab.english;
-      const keys = eng.toLowerCase().split(/[\s,/]+/).filter(w => w.length > 2 && !['the','and','for','from','with','away'].includes(w));
-      steps.push({
-        id: 'object_meaning',
-        ask: () => `What does <em>${esc(o.word)}</em> mean in English?`,
-        check: ans => keys.some(k => ans.toLowerCase().includes(k)),
-        hint1: () => `Look up <em>${esc(o.word)}</em> in your vocabulary list. Its base form is <em>${esc(o.vocab.latin)}</em>.`,
-        hint2: () =>
-          `<em>${esc(o.word)}</em> means <strong>${esc(eng)}</strong>` +
-          (o.caseInfo.number === 'plural' ? ` — plural here: "${esc(eng.replace(/^(a |the )?/, ''))}s".` : '.'),
-        correct: () =>
-          (o.caseInfo.number === 'plural'
-            ? `Good — it's plural: "${esc(eng.replace(/^(a |the )?/, ''))}s". `
-            : `Good. `) +
-          (extra.length ? `One more thing to check.` : `Now let's put the whole thing together.`),
-        wrongMsg: () => `Look up <em>${esc(o.word)}</em> in your vocabulary list.`,
-      });
-    }
-  }
-
-  // STEP: other words with vocab entries (prepositions, adverbs etc.)
-  if (extra.length > 0) {
-    const wordList = extra.map(t => `<em>${esc(t.word)}</em>`).join(', ');
-    steps.push({
-      id: 'extra_words',
-      ask: () =>
-        `There ${extra.length === 1 ? 'is' : 'are'} still ${extra.length === 1 ? 'one more word' : 'a few more words'} to account for: ${wordList}.<br><br>` +
-        `Look ${extra.length === 1 ? 'it' : 'them'} up and tell me what ${extra.length === 1 ? 'it' : 'they'} mean and how ${extra.length === 1 ? 'it' : 'they'} affect the translation.`,
-      check: () => true,
-      hint1: () => `Check your vocabulary list. Adverbs modify the verb; prepositions come before nouns.`,
-      hint2: () => extra.map(t => `<em>${esc(t.word)}</em> = ${esc(t.vocab.english)}`).join('; '),
-      correct: () => `Good — include that in your final translation.`,
-      wrongMsg: () => ``,
-    });
-  }
-
-  // STEP: write the full translation
-  steps.push({
-    id: 'full_translation',
-    ask: () => {
-      let parts = `<ul style="margin:8px 0 12px 20px;line-height:2;font-size:0.92rem;">`;
-      if (v) parts += `<li><strong>Verb:</strong> <em>${esc(v.word)}</em> — ${v.verb.label}</li>`;
-      if (s) parts += `<li><strong>Subject:</strong> <em>${esc(s.word)}</em> — nominative ${s.caseInfo.number}${s.vocab ? ` (${esc(s.vocab.english)})` : ''}</li>`;
-      if (o) parts += `<li><strong>Object:</strong> <em>${esc(o.word)}</em> — accusative ${o.caseInfo.number}${o.vocab ? ` (${esc(o.vocab.english)})` : ''}</li>`;
-      extra.forEach(t => { parts += `<li><em>${esc(t.word)}</em> = ${esc(t.vocab.english)}</li>`; });
-      parts += `</ul>`;
-      return `You've found all the pieces:${parts}` +
-        `Now write your complete English translation of <em>"${esc(sentence)}"</em>.<br><br>` +
-        `Important: if the Latin subject and verb are <strong>plural</strong>, make sure your English is plural too.`;
-    },
-    check: ans => ans.trim().split(/\s+/).length >= 3,
-    hint1: () => `Write it as a normal English sentence: who → what they do → to what/whom. Include every word.`,
-    hint2: () => `Check agreement: if the subject is plural (ending -ae, -i), use a plural noun in English ("girls", not "the girl").`,
-    correct: () =>
-      `That's your translation — bene factum!<br><br>` +
-      `Check with your teacher: (1) Is the number right — singular or plural? ` +
-      `(2) Have you included every word? (3) Does it read naturally in English?`,
-    wrongMsg: () => `Write a full sentence — at least a subject and a verb. Have a go.`,
-  });
-
-  return steps;
-}
-
-// ── English → Latin step builder ─────────────────────────────
-function buildEngLatSteps(sentence) {
-  const S = sentence;
-  return [
-    { id:'el_verb',    ask:() => `We're putting <em>"${esc(S)}"</em> into Latin, step by step.<br><br>What is the <strong>verb</strong> — the action word — in the English sentence?`, check:() => true, hint1:() => `The verb is the doing word. What is someone <em>doing</em> in this sentence?`, hint2:() => ``, correct:() => `Good. Look it up in your vocabulary list.`, wrongMsg:() => `` },
-    { id:'el_conj',    ask:() => `What <strong>conjugation number</strong> is it — 1, 2, 3, or 4?<br><div style="font-size:0.85rem;line-height:2;margin:6px 0">Check the <strong>infinitive</strong> (second principal part):<br><strong>-āre</strong> = Verb 1 &nbsp;·&nbsp; <strong>-ēre</strong> = Verb 2 &nbsp;·&nbsp; <strong>-ere</strong> = Verb 3 &nbsp;·&nbsp; <strong>-īre</strong> = Verb 4</div>`, check:() => true, hint1:() => `Look at the infinitive ending in your vocabulary list's second principal part.`, hint2:() => ``, correct:() => `Good. Now work out which ending to use.`, wrongMsg:() => `` },
-    { id:'el_person',  ask:() => `Who is the subject — <strong>I / you / he,she,it / we / you all / they</strong>?<br><div style="font-size:0.85rem;line-height:2;margin:6px 0">Present endings — Verb 1: <strong>-o, -as, -at, -amus, -atis, -ant</strong><br>Verb 2: <strong>-eo, -es, -et, -emus, -etis, -ent</strong><br>Verb 3: <strong>-o, -is, -it, -imus, -itis, -unt</strong></div>What ending will you use?`, check:() => true, hint1:() => `Is the subject singular or plural? Count how many are doing the action.`, hint2:() => ``, correct:() => `Good. Now find the subject noun.`, wrongMsg:() => `` },
-    { id:'el_subject', ask:() => `What is the <strong>subject</strong> in Latin? Look it up and give it the right <strong>nominative</strong> ending.<br><div style="font-size:0.85rem;line-height:2;margin:6px 0">1st decl.: <strong>-a</strong> (sing.), <strong>-ae</strong> (pl.)<br>2nd decl.: <strong>-us/-er</strong> (sing.), <strong>-i</strong> (pl.)</div>`, check:() => true, hint1:() => `The subject takes the nominative case. 1st decl. nom. sing. ends in -a; 2nd decl. masc. in -us.`, hint2:() => ``, correct:() => `Good. Is there a direct object?`, wrongMsg:() => `` },
-    { id:'el_object',  ask:() => `Is there a <strong>direct object</strong>? If so, give it the <strong>accusative</strong> ending.<br><div style="font-size:0.85rem;line-height:2;margin:6px 0">1st decl.: <strong>-am</strong> (sing.), <strong>-as</strong> (pl.)<br>2nd decl.: <strong>-um</strong> (sing.), <strong>-os</strong> (pl.)<br>3rd decl.: <strong>-em</strong> (sing.), <strong>-es</strong> (pl.)</div>`, check:() => true, hint1:() => `The direct object takes the accusative: 1st decl. -a → -am; 2nd decl. -us → -um.`, hint2:() => ``, correct:() => `Good. Now put it all together.`, wrongMsg:() => `` },
-    { id:'el_write',   ask:() => `Write the complete <strong>Latin sentence</strong> for <em>"${esc(S)}"</em>.<br><br>Usual Latin word order: <strong>Subject (nom.) → Object (acc.) → Verb</strong>.<br>Check every word has the right ending before you write it.`, check:() => true, hint1:() => `Put the nominative subject first, accusative object second, verb last.`, hint2:() => `Double-check every ending: does the verb agree with the subject?`, correct:() => `<strong>Bene factum!</strong> Show your answer to your teacher to check it is correct.`, wrongMsg:() => `` },
-  ];
-}
-
-// ── UI ────────────────────────────────────────────────────────
-
-function startTranslation() {
-  const inputEl  = document.getElementById('trSentenceInput');
-  const sentence = inputEl.value.trim();
-  if (!sentence) return;
-
-  trSentence     = sentence;
-  coach.stepIdx  = 0;
-  coach.attempts = 0;
-
-  if (trDirection === 'eng2lat') {
-    coach.steps  = buildEngLatSteps(sentence);
-    coach.parsed = null;
-  } else {
-    coach.parsed = parseSentence(sentence);
-    coach.steps  = buildLatEngSteps(sentence, coach.parsed);
-  }
-
-  const chat  = document.getElementById('trChat');
-  const empty = document.getElementById('trEmpty');
-  if (empty) empty.style.display = 'none';
-  chat.innerHTML = `<div class="tr-typing" id="trTyping" style="display:none"></div>`;
+  // Show reply zone
   document.getElementById('trReplyZone').style.display = 'flex';
   document.getElementById('trReplyInput').value = '';
 
-  const dirLabel = trDirection === 'lat2eng' ? 'Latin \u2192 English' : 'English \u2192 Latin';
-  addBubble('tutor',
-    `<strong>Translation Coach \u00b7 ${dirLabel}</strong>` +
-    `<em style="font-family:'IM Fell English',serif;font-size:1.1rem;display:block;margin-top:4px">"${esc(sentence)}"</em>`
-  );
+  // Add sentence display bubble
+  const dirLabel = trDirection === 'lat2eng' ? 'Latin → English' : 'English → Latin';
+  addBubble('tutor', `<strong>The sentence &nbsp;·&nbsp; ${dirLabel}</strong><em style="font-family:'IM Fell English',serif;font-size:1.1rem;display:block;margin-top:4px;">${esc(trSentence)}</em>`);
 
-  _deliverStep();
-  document.getElementById('trReplyInput').focus();
+  const systemPrompt = buildSystemPrompt();
+  const dirInstruction = trDirection === 'lat2eng'
+    ? `The sentence to translate from Latin into English is: "${trSentence}". Please begin guiding me.`
+    : `The sentence to compose in Latin from English is: "${trSentence}". Please begin guiding me.`;
+  trHistory.push({role: 'user', content: dirInstruction});
+  await askMagister(systemPrompt);
 }
 
-function _deliverStep() {
-  if (coach.stepIdx >= coach.steps.length) {
-    addBubble('tutor', `<strong>Magister</strong>Bene factum \u2014 you've worked all the way through! Type a new sentence above and press Begin to try another.`);
-    return;
-  }
-  const step = coach.steps[coach.stepIdx];
-  coach.attempts = 0;
-  addBubble('tutor', `<strong>Magister</strong>${step.ask()}`);
-  document.getElementById('trReplyInput').focus();
-}
-
-function sendReply() {
-  const inputEl = document.getElementById('trReplyInput');
-  const reply   = inputEl.value.trim();
+async function sendReply() {
+  if (trBusy) return;
+  const input = document.getElementById('trReplyInput');
+  const reply = input.value.trim();
   if (!reply) return;
-  inputEl.value = '';
-  inputEl.style.height = '38px';
+
+  input.value = '';
+  input.style.height = '38px';
   addBubble('student', `<strong>You</strong>${esc(reply)}`);
+  trHistory.push({role: 'user', content: reply});
+  await askMagister(buildSystemPrompt());
+}
 
-  if (coach.steps.length === 0) { startTranslation(); return; }
-  if (coach.stepIdx >= coach.steps.length) {
-    addBubble('tutor', `<strong>Magister</strong>You've finished! Type a new sentence above and press Begin.`);
-    return;
-  }
+function buildSystemPrompt() {
+  if (trDirection === 'lat2eng') {
+    return `You are a Latin translation coach called Magister, helping a prep-school student (aged 10–13) translate a Latin sentence into English using the Socratic method.
 
-  const step = coach.steps[coach.stepIdx];
+The sentence is: "${trSentence}"
+Direction: Latin → English (student must produce the English translation)
 
-  const dontKnow = /^(i don.?t know|idk|no idea|not sure|help|stuck|dunno|give up|no clue|i.?m lost|\?+|huh|what|unsure)$/i.test(reply.trim())
-    || reply.trim().length <= 2;
+═══ ABSOLUTE SAFEGUARDS — these override everything else, always ═══
+• NEVER give the English meaning of any Latin word — not directly, not with hints like "it's a movement word" or "think about what 'amo' usually means." The student must say the meaning first.
+• NEVER write a translation of any word or phrase, even partially.
+• NEVER confirm a word's meaning before the student has stated it themselves.
+• NEVER paraphrase, restate, or translate the input sentence in any form. Always refer to words in the sentence using the exact original text — never a translated or reworded version. Do not say "this sentence is about…" or "in other words…" or quote an English equivalent of Latin words.
+• If the student directly asks you to tell them the answer or translation, respond warmly but firmly: "I really can't give it away — that's the whole point! But let's try coming at it from a different angle." Then offer a grammar clue only.
+• If a student says "I don't know" or "just tell me", do NOT tell them. Give a more targeted sub-question instead (e.g. about an ending, a case, or a grammar rule they should know).
+• If a student's answer is wrong, point to the specific grammar reason it's wrong — never correct it with the right word.
+• Never use phrases like "that word means…" or "the translation is…" or "it comes from…" or "in English that is…" that reveal meaning.
 
-  if (dontKnow) {
-    coach.attempts++;
-    if (coach.attempts === 1) {
-      addBubble('tutor', `<strong>Magister</strong>That's okay \u2014 here's a clue.<br><br>${step.hint1()}`);
-    } else if (coach.attempts === 2 && step.hint2 && step.hint2()) {
-      addBubble('tutor', `<strong>Magister</strong>Let me be more specific.<br><br>${step.hint2()}`);
-    } else {
-      addBubble('tutor', `<strong>Magister</strong>Don\u2019t worry \u2014 let\u2019s move on. Check this one with your teacher.`);
-      coach.stepIdx++;
-      _deliverStep();
-    }
-    return;
-  }
+═══ QUESTIONING METHOD ═══
+Ask ONE question at a time. Keep language simple and age-appropriate.
+IMPORTANT: Before asking your first question, silently check what grammatical elements actually exist in the sentence. Only ask about elements that are genuinely present.
+  - If there IS a finite verb: start there — what person/number ending does it have?
+  - If there is NO finite verb (e.g. a vocative phrase, noun phrase, or exclamation): do NOT ask "where is the verb?" — instead start with the case of the noun(s) present.
+  - Then work through subject, object, and any other elements that exist.
+  - Once all parts are identified, ask the student to write out their full English translation — do NOT write it for them.
 
-  if (step.check(reply)) {
-    const praise = step.correct ? step.correct(reply) : '';
-    coach.stepIdx++;
-    if (praise) addBubble('tutor', `<strong>Magister</strong>${praise}`);
-    setTimeout(_deliverStep, praise ? 350 : 0);
+After two failed attempts at any step, ask a simpler sub-question (about word endings, case rules, or verb conjugation) — never supply the answer.
+Be warm and specific in praise. Avoid hollow phrases like "Great job!" — say what exactly they got right.
+Keep each response to 2–4 sentences maximum.
+Continue naturally from where the conversation left off.`;
   } else {
-    coach.attempts++;
-    if (coach.attempts === 1) {
-      addBubble('tutor', `<strong>Magister</strong>${step.wrongMsg() || 'Not quite.'}<br><br>${step.hint1()}`);
-    } else if (coach.attempts === 2) {
-      const h2 = step.hint2 && step.hint2();
-      addBubble('tutor', `<strong>Magister</strong>${h2 || step.hint1()}`);
-    } else {
-      const h2 = step.hint2 && step.hint2();
-      addBubble('tutor', `<strong>Magister</strong>${h2 || `Let\u2019s move on \u2014 check this with your teacher.`}`);
-      coach.stepIdx++;
-      setTimeout(_deliverStep, 400);
-    }
+    return `You are a Latin composition coach called Magister, helping a prep-school student (aged 10–13) compose a Latin sentence from English using the Socratic method.
+
+The sentence is: "${trSentence}"
+Direction: English → Latin (student must produce the Latin)
+
+═══ ABSOLUTE SAFEGUARDS — these override everything else, always ═══
+• NEVER write any Latin — not a word, not a stem, not an ending, not even a single letter of Latin.
+• NEVER give away which Latin word to use, not even indirectly (e.g. do NOT say "think of the verb 'amare'" or "it starts with port-").
+• NEVER confirm that a specific Latin word or form is correct before the student has written it themselves.
+• NEVER paraphrase, restate, or translate the input sentence in any form. When referring to the sentence, quote the student's exact words only — do not produce a Latin version of it or reword it in any way. Do not say "so in Latin that would be…" or "the sentence means…".
+• If the student directly asks you to tell them the Latin, respond warmly but firmly: "I genuinely can't write it for you — that's the whole point! But let's break it into smaller steps." Then ask one targeted grammar question.
+• If a student says "I don't know" or "just tell me", do NOT tell them. Give a more targeted sub-question about the relevant grammar rule instead.
+• If a student writes incorrect Latin, identify the specific grammar error (e.g. "You've used a nominative ending there — but is this the subject or the object?") — never write the correct version.
+• Never write phrases like "the Latin for X is…" or "you need the word…" or "the ending should be…" or "in Latin that is…" that give away any Latin.
+
+═══ QUESTIONING METHOD ═══
+Ask ONE question at a time. Keep language simple and age-appropriate.
+IMPORTANT: Before asking your first question, silently check what grammatical elements actually exist in the English sentence. Only ask about elements that are genuinely present.
+  - If there IS a verb: start there — what conjugation group does it belong to? What person and number?
+  - If there is NO verb (e.g. a noun phrase or exclamation): do NOT ask about conjugation — instead start with the noun: what case will it need? What declension?
+  - Then work through subject, object, adjectives, and other elements that actually exist.
+  - Once all parts are discussed, ask the student to write out their full Latin sentence — do NOT write it.
+
+After two failed attempts at any step, ask a simpler sub-question about the relevant grammar rule — never supply any Latin.
+Be warm and specific in praise. Avoid hollow phrases.
+Keep each response to 2–4 sentences maximum.
+Continue naturally from where the conversation left off.`;
   }
+}
+
+async function askMagister(systemPrompt) {
+  trBusy = true;
+  document.getElementById('trSendBtn').disabled = true;
+  document.getElementById('trStartBtn').disabled = true;
+
+  // Show typing indicator
+  const typing = document.getElementById('trTyping');
+  if (typing) {
+    typing.style.display = 'block';
+    typing.classList.add('visible');
+    document.getElementById('trChat').scrollTop = document.getElementById('trChat').scrollHeight;
+  }
+
+  try {
+    const response = await fetch('/api/anthropic', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: trHistory
+      })
+    });
+
+    const data = await response.json();
+    const text = (data.content?.find(b => b.type === 'text')?.text) || 'I had trouble with that — could you try again?';
+
+    trHistory.push({role: 'assistant', content: text});
+
+    if (typing) { typing.style.display = 'none'; typing.classList.remove('visible'); }
+
+    // Render Magister response — convert newlines to <br>, but don't escape the whole thing
+    const formatted = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+    addBubble('tutor', `<strong>Magister</strong>${formatted}`);
+    document.getElementById('trReplyInput').focus();
+
+  } catch(err) {
+    if (typing) { typing.style.display = 'none'; typing.classList.remove('visible'); }
+    addBubble('tutor', `<strong>Magister</strong>Something went wrong — please check your connection and try again.`);
+  }
+
+  trBusy = false;
+  document.getElementById('trSendBtn').disabled = false;
+  document.getElementById('trStartBtn').disabled = false;
 }
 
 function addBubble(type, html) {
-  const chat   = document.getElementById('trChat');
+  const chat = document.getElementById('trChat');
   const typing = document.getElementById('trTyping');
-  const div    = document.createElement('div');
+  const div = document.createElement('div');
   div.className = `tr-bubble ${type}`;
   div.innerHTML = html;
-  if (typing && typing.parentNode === chat) chat.insertBefore(div, typing);
-  else chat.appendChild(div);
+  // Insert before typing indicator so it stays at bottom
+  if (typing && typing.parentNode === chat) {
+    chat.insertBefore(div, typing);
+  } else {
+    chat.appendChild(div);
+  }
   chat.scrollTop = chat.scrollHeight;
 }
 
-
-// ── TEST GENERATOR ──
-let tgQuestions = [];
-let tgMarked = false;
-let tgSentenceResults = {};
-
-function openTestGen() {
-  document.getElementById('tgOverlay').classList.add('open');
-  updatePoolInfo();
-}
-
-function closeTestGen() {
-  document.getElementById('tgOverlay').classList.remove('open');
-}
-
-document.getElementById('tgOverlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('tgOverlay')) closeTestGen();
-});
-
-function toggleChip(el) {
-  el.classList.toggle('selected');
-  updatePoolInfo();
-}
-
-function getSelected(group) {
-  return [...document.querySelectorAll(`.tg-chip[data-group="${group}"].selected`)]
-    .map(el => el.dataset.val);
-}
-
-// ── Advanced filter helpers ──
-const exclWords = { tg: new Set(), pt: new Set(), fc: new Set() };
-
-function toggleAdv(pfx) {
-  const btn  = document.getElementById(pfx + 'AdvToggle');
-  const body = document.getElementById(pfx + 'AdvBody');
-  if (!btn || !body) return;
-  const opening = !body.classList.contains('open');
-  body.classList.toggle('open', opening);
-  btn.classList.toggle('open', opening);
-  const txt = btn.querySelector('span:first-child');
-  if (txt) txt.innerHTML = opening
-    ? '&#9660; Advanced: declensions, conjugations, exclude specific words'
-    : '&#9658; Advanced: declensions, conjugations, exclude specific words';
-  if (opening) renderExclList(pfx);
-}
-
-function setAllCb(cls, checked) {
-  document.querySelectorAll('.' + cls).forEach(cb => { cb.checked = checked; });
-  const pfx = cls.substring(0, 2);
-  if (pfx === 'tg') updatePoolInfo();
-  else if (pfx === 'pt') updatePtPool();
-  else if (pfx === 'fc') updateFcPool();
-}
-
-function getCheckedVals(cls) {
-  return [...document.querySelectorAll('.' + cls + ':checked')].map(cb => cb.dataset.val);
-}
-
-function renderExclList(pfx) {
-  const search = (document.getElementById(pfx + 'ExclSearch')?.value || '').toLowerCase();
-  const list   = document.getElementById(pfx + 'ExclList');
-  const cnt    = document.getElementById(pfx + 'ExclCount');
-  if (!list) return;
-  const base = pfx === 'tg' ? getPoolWords(true) : pfx === 'pt' ? getPtPool(true) : getFcPool(true);
-  const shown = (search ? base.filter(w => w.latin.toLowerCase().includes(search) || w.english.toLowerCase().includes(search)) : base).slice(0, 80);
-  list.innerHTML = shown.map(w => {
-    const ex = exclWords[pfx].has(w.latin);
-    const lat = w.latin.replace(/'/g, '&#39;');
-    return `<div class="excl-item${ex ? ' excluded' : ''}" onclick="toggleExcl('${pfx}','${lat}',this)">
-      <input type="checkbox"${ex ? ' checked' : ''}> <em>${w.latin}</em> &mdash; ${w.english} <small style="color:var(--ink-faint)">${w.type}</small>
-    </div>`;
-  }).join('') || '<div style="padding:6px;font-size:0.8rem;color:var(--ink-faint);font-style:italic">No words found</div>';
-  if (cnt) cnt.textContent = exclWords[pfx].size ? exclWords[pfx].size + ' word' + (exclWords[pfx].size !== 1 ? 's' : '') + ' excluded' : '';
-}
-
-function toggleExcl(pfx, latin, el) {
-  const s = exclWords[pfx];
-  if (s.has(latin)) { s.delete(latin); el.classList.remove('excluded'); el.querySelector('input').checked = false; }
-  else              { s.add(latin);    el.classList.add('excluded');    el.querySelector('input').checked = true;  }
-  const cnt = document.getElementById(pfx + 'ExclCount');
-  if (cnt) cnt.textContent = s.size ? s.size + ' word' + (s.size !== 1 ? 's' : '') + ' excluded' : '';
-  if (pfx === 'tg') updatePoolInfo();
-  else if (pfx === 'pt') updatePtPool();
-  else if (pfx === 'fc') updateFcPool();
-}
-
-function clearExclusions(pfx) {
-  exclWords[pfx].clear();
-  renderExclList(pfx);
-  if (pfx === 'tg') updatePoolInfo();
-  else if (pfx === 'pt') updatePtPool();
-  else if (pfx === 'fc') updateFcPool();
-}
-
-function clampRatios() {
-  const w = parseInt(document.getElementById('tgPctWord')?.value) || 0;
-  const s = parseInt(document.getElementById('tgPctSent')?.value) || 0;
-  const g = parseInt(document.getElementById('tgPctGram')?.value) || 0;
-  const note = document.getElementById('tgRatioNote');
-  if (note) {
-    const total = w + s + g;
-    const ok = total === 100;
-    note.textContent = 'Word ' + w + '% + Sentence ' + s + '% + Grammar ' + g + '% = ' + total + '%' + (ok ? '' : ' (should total 100%)');
-    note.style.color = ok ? 'var(--ink-faint)' : 'var(--red)';
-  }
-}
-
-// ── Core pool builders — respect advanced checkboxes ──
-function applySubFilters(words, pfx) {
-  const nounVals = getCheckedVals(pfx + 'Noun');
-  const verbVals = getCheckedVals(pfx + 'Verb');
-  const adjVals  = getCheckedVals(pfx + 'Adj');
-  return words.filter(w => {
-    if (exclWords[pfx] && exclWords[pfx].has(w.latin)) return false;
-    const wt = w.type.toLowerCase();
-    if (wt.startsWith('noun') && nounVals.length) {
-      return nounVals.some(v => wt === v || wt.startsWith(v));
-    }
-    if (wt.startsWith('verb') && verbVals.length) {
-      return verbVals.some(v => wt === v || wt.startsWith(v));
-    }
-    if (wt.startsWith('adjective') && adjVals.length) {
-      return adjVals.some(v => wt === v || wt.startsWith(v));
-    }
-    return true;
-  });
-}
-
-function getPoolWords(ignoreExcl) {
-  const levels    = getSelected('level');
-  const typeChips = getSelected('type');
-  let pool = vocab.filter(w =>
-    levels.includes(w.level) &&
-    typeChips.some(t => w.type.toLowerCase().includes(t))
-  );
-  if (!ignoreExcl) pool = applySubFilters(pool, 'tg');
-  return pool;
-}
-
-function updatePoolInfo() {
-  const pool   = getPoolWords();
-  const qtypes = getSelected('qtype');
-  const info   = document.getElementById('tgPoolInfo');
-  const btn    = document.getElementById('tgGenerateBtn');
-  if (!info) return;
-  const excl = exclWords.tg.size ? ' (' + exclWords.tg.size + ' excluded)' : '';
-  if (pool.length < 5) {
-    info.innerHTML = '<span style="color:var(--red)">Only ' + pool.length + ' words match &mdash; select more filters.</span>';
-    if (btn) btn.disabled = true;
-  } else if (qtypes.length === 0) {
-    info.innerHTML = '<span style="color:var(--red)">Please select at least one question type.</span>';
-    if (btn) btn.disabled = true;
-  } else {
-    info.innerHTML = '<strong>' + pool.length + '</strong> words in pool' + excl + '.';
-    if (btn) btn.disabled = false;
-  }
-}
-
-function resetToSetup() {
-  document.getElementById('tgSetup').style.display = '';
-  document.getElementById('tgTest').classList.remove('active');
-  document.getElementById('tgHeaderTitle').textContent = 'Test Generator';
-  document.getElementById('tgHeaderSub').textContent = 'Choose your parameters, then generate a custom test.';
-  tgQuestions = [];
-  tgMarked = false;
-  tgSentenceResults = {};
-  updatePoolInfo();
-}
-
-function renderTest() {
-  const total = tgQuestions.length;
-  document.getElementById('tgHeaderTitle').textContent = `Test — ${total} Questions`;
-  document.getElementById('tgHeaderSub').textContent = 'Answer all questions, then click "Mark my test".';
-  document.getElementById('tgProgressLabel').textContent = `0 / ${total} answered`;
-
-  document.getElementById('tgTestBody').innerHTML = tgQuestions.map((q, i) => {
-    const isSentence = q.type === 'sentence' || q.type === 'engsentence';
-    const badge = isSentence ? 'sentence' : 'vocab';
-    const badgeLabel = {lat2eng:'Latin → English', eng2lat:'English → Latin', sentence:'Translate into English', engsentence:'Translate into Latin'}[q.type] || q.type;
-    return `<div class="tg-question" id="tgQ${i}">
-      <div class="tg-q-meta">
-        <span class="tg-q-num">Q${i+1}</span>
-        <span class="tg-q-badge ${badge}">${badgeLabel}</span>
-      </div>
-      <div class="tg-q-text">${esc(q.prompt)}</div>
-      ${isSentence
-        ? `<textarea class="tg-answer-input" id="tgAns${i}" rows="2" placeholder="Write your translation here…" oninput="updateTgProgress()"></textarea>`
-        : `<input type="text" class="tg-answer-input" id="tgAns${i}" placeholder="Your answer…" oninput="updateTgProgress()" onkeydown="if(event.key==='Enter'){event.preventDefault();focusNextQ(${i})}">`
-      }
-      <div class="tg-feedback" id="tgMark${i}" style="display:none">
-        <div class="tg-feedback-text" id="tgModel${i}"></div>
-        <div class="tg-self-mark-btns" id="tgSelfBtns${i}" style="display:none">
-          <button class="tg-mark-btn correct" onclick="selfMark(${i},true)">✓ I got it right</button>
-          <button class="tg-mark-btn wrong" onclick="selfMark(${i},false)">✗ I got it wrong</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-  updateTgProgress();
-}
-
-function focusNextQ(i) {
-  const next = document.getElementById(`tgAns${i+1}`);
-  if (next) next.focus();
-}
-
-function updateTgProgress() {
-  const total = tgQuestions.length;
-  let answered = 0;
-  for (let i = 0; i < total; i++) {
-    const el = document.getElementById(`tgAns${i}`);
-    if (el && el.value.trim()) answered++;
-  }
-  const pct = total ? (answered / total * 100) : 0;
-  document.getElementById('tgProgressFill').style.width = pct + '%';
-  document.getElementById('tgProgressLabel').textContent = `${answered} / ${total} answered`;
-}
-
-async function markTest() {
-  if (tgMarked) return;
-  tgMarked = true;
-  document.getElementById('tgSubmitBtn').disabled = true;
-  document.getElementById('tgSubmitBtn').textContent = 'Marking…';
-
-  const total = tgQuestions.length;
-
-  // Separate question types: word (AI-marked), sentence/parsing (self-mark)
-  const wordQs = [];
-  for (let i = 0; i < total; i++) {
-    const q = tgQuestions[i];
-    const isSentence = q.type === 'sentence' || q.type === 'engsentence';
-    const isParsing  = q.type === 'parsing';
-    if (!isSentence && !isParsing) {
-      const el = document.getElementById(`tgAns${i}`);
-      wordQs.push({ i, prompt: q.prompt || q.question, modelAnswer: q.answer, userAnswer: el ? el.value.trim() : '', type: q.type });
-    }
-  }
-
-  // AI-mark all word questions in one call
-  let aiResults = {};
-  if (wordQs.length > 0) {
-    try {
-      const markingPrompt = `You are marking a Latin vocabulary test for a prep-school student aged 10–13. Apply the following rules strictly and consistently.
-
-MARKING RULES:
-
-For "lat2eng" questions (Latin word → English meaning):
-- CORRECT: the student gives any of the standard dictionary meanings of the Latin word (the model answer lists these)
-- CORRECT: minor spelling errors that don't change the meaning (e.g. "freind" for "friend")
-- CORRECT: dropping or adding "I" prefix on verbs is fine — "run", "I run", "to run" are all acceptable for a verb meaning "I run"
-- INCORRECT: a different grammatical form of the word — e.g. "dangers" is WRONG for periculum (which is singular "danger"); "fields" is WRONG for ager (which is singular "field"); "they love" is WRONG for amo (which means "I love")
-- INCORRECT: a related but wrong meaning — e.g. "fear" is WRONG for periculum (danger), "go" is WRONG for venio (come)
-- INCORRECT: blank answers
-
-For "eng2lat" questions (English word → Latin):
-- CORRECT: the correct Latin headword form, even with minor spelling variation
-- INCORRECT: a different Latin word, even if related in meaning
-- INCORRECT: the correct Latin word but in a declined/conjugated form rather than the dictionary headword
-
-FEEDBACK RULES:
-- If correct: confirm briefly, e.g. "Correct — periculum means danger."
-- If wrong due to number/form: say so specifically, e.g. "Not quite — periculum is singular (danger), not plural. The form for dangers would be pericula."
-- If wrong due to wrong meaning: e.g. "Not quite — periculum means danger, not fear."
-- If wrong Latin word given: e.g. "Not quite — the Latin for farmer is agricola, not colona."
-- If blank: "No answer given — the answer was [word]."
-- Keep feedback to one or two sentences. Be direct but not discouraging.
-
-Questions to mark:
-${wordQs.map((q, n) => `${n+1}. [${q.type}] Prompt: "${q.prompt}" | Model answer: "${q.modelAnswer}" | Student answered: "${q.userAnswer || '(blank)'}"`).join('\n')}
-
-Return ONLY a valid JSON array, one object per question, same order, with keys:
-- "correct": true or false
-- "feedback": your feedback string
-
-No markdown, no explanation, just the JSON array.`;
-
-      const response = await fetch('/api/anthropic', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 2000,
-          messages: [{ role: 'user', content: markingPrompt }]
-        })
-      });
-      const data = await response.json();
-      let raw = (data.content?.find(b => b.type === 'text')?.text) || '[]';
-      raw = raw.replace(/```json|```/g, '').trim();
-      const jStart = raw.indexOf('['), jEnd = raw.lastIndexOf(']');
-      if (jStart !== -1 && jEnd !== -1) {
-        const results = JSON.parse(raw.slice(jStart, jEnd + 1));
-        wordQs.forEach((q, n) => {
-          aiResults[q.i] = results[n] || { correct: false, feedback: 'Could not mark this question.' };
-        });
-      }
-    } catch(err) {
-      // Fall back to simple matching if AI marking fails
-      wordQs.forEach(q => {
-        const correct = simpleFallbackMatch(q.userAnswer, q.modelAnswer);
-        aiResults[q.i] = { correct, feedback: correct ? `Correct — ${q.modelAnswer}.` : `The answer was: ${q.modelAnswer}.` };
-      });
-    }
-  }
-
-  // Disable all inputs, apply results
-  let autoScore = 0, pendingSentences = 0;
-  for (let i = 0; i < total; i++) {
-    const q = tgQuestions[i];
-    const el = document.getElementById(`tgAns${i}`);
-    const isSentence = q.type === 'sentence' || q.type === 'engsentence';
-    const isParsing  = q.type === 'parsing';
-    if (el) el.disabled = true;
-
-    const feedbackDiv  = document.getElementById(`tgMark${i}`);
-    const feedbackText = document.getElementById(`tgModel${i}`);
-    const selfBtns     = document.getElementById(`tgSelfBtns${i}`);
-    const noteText = q.note ? ` — ${q.note}` : '';
-    const selfMarkHTML = `<button class="tg-mark-btn correct" onclick="selfMark(${i},true)">✓ I got it right</button><button class="tg-mark-btn wrong" onclick="selfMark(${i},false)">✗ I got it wrong</button>`;
-
-    if (isSentence) {
-      if (feedbackText) {
-        feedbackText.innerHTML = `<strong>Model answer:</strong> ${esc(q.answer)}${noteText ? `<br><span style="font-size:0.83rem;color:var(--ink-faint)">${esc(noteText.slice(3))}</span>` : ''}`;
-        feedbackText.className = 'tg-feedback-text sentence-fb';
-      }
-      if (selfBtns) { selfBtns.innerHTML = selfMarkHTML; selfBtns.style.display = 'flex'; }
-      if (feedbackDiv) feedbackDiv.style.display = 'block';
-      pendingSentences++;
-    } else if (isParsing) {
-      // Grammar questions: show model answer, let student self-mark
-      if (feedbackText) {
-        feedbackText.innerHTML = `<strong>Answer:</strong> ${esc(q.answer || '')}`;
-        feedbackText.className = 'tg-feedback-text sentence-fb';
-      }
-      if (selfBtns) { selfBtns.innerHTML = selfMarkHTML; selfBtns.style.display = 'flex'; }
-      if (feedbackDiv) feedbackDiv.style.display = 'block';
-      pendingSentences++;
-    } else {
-      const result = aiResults[i] || { correct: false, feedback: `The answer was: ${q.answer || ''}` };
-      if (result.correct) autoScore++;
-      if (el) el.classList.add(result.correct ? 'correct' : 'wrong');
-      if (feedbackText) {
-        feedbackText.textContent = result.feedback;
-        feedbackText.className = `tg-feedback-text ${result.correct ? 'correct-fb' : 'wrong-fb'}`;
-      }
-      if (selfBtns) selfBtns.style.display = 'none';
-      if (feedbackDiv) feedbackDiv.style.display = 'block';
-    }
-  }
-
-  tgQuestions._autoScore = autoScore;
-  tgQuestions._pendingSentences = pendingSentences;
-  tgQuestions._sentenceScore = 0;
-  const autoTotal = total - pendingSentences;
-
-  document.getElementById('tgFooterInfo').textContent =
-    pendingSentences > 0
-      ? `Word questions: ${autoScore}/${autoTotal} ✓ — mark your sentence translations above.`
-      : '';
-  if (pendingSentences === 0) showFinalScore();
-
-  document.getElementById('tgSubmitBtn').style.display = 'none';
-  document.getElementById('tgTestBody').scrollTop = 0;
-}
-
-function simpleFallbackMatch(a, b) {
-  a = (a||'').toLowerCase().replace(/[.,!?;]/g,'').trim();
-  b = (b||'').toLowerCase().replace(/[.,!?;]/g,'').trim();
-  if (a === b) return true;
-  if (b.split(/[,\/]/).map(s=>s.trim()).includes(a)) return true;
-  return a.split(/[,\/]/)[0].trim() === b.split(/[,\/]/)[0].trim();
-}
-
-function selfMark(i, correct) {
-  if (tgSentenceResults.hasOwnProperty(i)) return;
-  tgSentenceResults[i] = correct;
-  const el = document.getElementById(`tgAns${i}`);
-  if (el) el.classList.add(correct ? 'correct' : 'wrong');
-
-  // Update feedback text colour
-  const feedbackText = document.getElementById(`tgModel${i}`);
-  if (feedbackText) feedbackText.className = `tg-feedback-text ${correct ? 'correct-fb' : 'wrong-fb'}`;
-
-  // Disable buttons and fade the unchosen one
-  const selfBtns = document.getElementById(`tgSelfBtns${i}`);
-  if (selfBtns) {
-    selfBtns.querySelectorAll('.tg-mark-btn').forEach(b => {
-      b.disabled = true;
-      b.style.opacity = b.classList.contains(correct ? 'correct' : 'wrong') ? '1' : '0.3';
-      b.style.cursor = 'default';
-    });
-  }
-
-  if (correct) tgQuestions._sentenceScore = (tgQuestions._sentenceScore || 0) + 1;
-  tgQuestions._pendingSentences--;
-
-  if (tgQuestions._pendingSentences > 0) {
-    document.getElementById('tgFooterInfo').textContent = `${tgQuestions._pendingSentences} sentence(s) still to mark…`;
-  } else {
-    document.getElementById('tgFooterInfo').textContent = '';
-    showFinalScore();
-  }
-}
-
-function showFinalScore() {
-  const total = tgQuestions.length;
-  const score = (tgQuestions._autoScore || 0) + (tgQuestions._sentenceScore || 0);
-  const pct = Math.round(score / total * 100);
-  const comment = pct >= 80 ? 'Excellent — optime!' : pct >= 60 ? 'Good effort — keep practising.' : 'Keep going — practice makes perfect.';
-  const body = document.getElementById('tgTestBody');
-  const scoreDiv = document.createElement('div');
-  scoreDiv.className = 'tg-score show';
-  scoreDiv.innerHTML = `<div class="tg-score-num">${score}<span>/${total}</span></div><div class="tg-score-label">${pct}% &mdash; ${comment}</div>`;
-  body.insertBefore(scoreDiv, body.firstChild);
-  body.scrollTop = 0;
-  document.getElementById('tgProgressFill').style.width = pct + '%';
-  document.getElementById('tgProgressLabel').textContent = `Final score: ${score} / ${total}`;
-}
-
-function shuffle(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-
-// ── PRINT TOOL ──
-let ptSheetType = 'test';
-
-function openPrintTool() {
-  document.getElementById('ptOverlay').classList.add('open');
-  updatePtPool();
-}
-function closePrintTool() {
-  document.getElementById('ptOverlay').classList.remove('open');
-}
-document.getElementById('ptOverlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('ptOverlay')) closePrintTool();
-});
-
-function setPtType(type) {
-  ptSheetType = type;
-  document.getElementById('ptTypeTest').classList.toggle('active', type === 'test');
-  document.getElementById('ptTypeLCWC').classList.toggle('active', type === 'lcwc');
-  const gram = document.getElementById('ptTypeGram');
-  if (gram) gram.classList.toggle('active', type === 'gram');
-  document.getElementById('ptTestOpts').style.display  = type === 'test' ? 'flex' : 'none';
-  document.getElementById('ptLCWCOpts').style.display  = type === 'lcwc' ? 'flex' : 'none';
-  const go = document.getElementById('ptGramOpts');
-  if (go) go.style.display = type === 'gram' ? 'flex' : 'none';
-}
-
-function updatePtSubtype() { /* replaced by checkbox system */ }
-
-function getPtPool(ignoreExcl) {
-  const levelVal = document.getElementById('ptLevel').value;
-  const levels   = levelVal ? levelVal.split(',') : ['L1','L2','L3'];
-  const catVals  = getCheckedVals('ptCat');
-  let pool = vocab.filter(w => {
-    if (!levels.includes(w.level)) return false;
-    const wt = w.type.toLowerCase();
-    if (catVals.length && !catVals.some(c => wt.includes(c))) return false;
-    return true;
-  });
-  if (!ignoreExcl) {
-    const nounVals = getCheckedVals('ptNoun');
-    const verbVals = getCheckedVals('ptVerb');
-    const adjVals  = getCheckedVals('ptAdj');
-    pool = pool.filter(w => {
-      if (exclWords.pt.has(w.latin)) return false;
-      const wt = w.type.toLowerCase();
-      if (wt.startsWith('noun') && nounVals.length) return nounVals.some(v => wt === v || wt.startsWith(v));
-      if (wt.startsWith('verb') && verbVals.length) return verbVals.some(v => wt === v || wt.startsWith(v));
-      if (wt.startsWith('adjective') && adjVals.length) return adjVals.some(v => wt === v || wt.startsWith(v));
-      return true;
-    });
-  }
-  return pool;
-}
-
-function updatePtPool() {
-  const pool = getPtPool();
-  const info = document.getElementById('ptPoolInfo');
-  const btn  = document.getElementById('ptPrintBtn');
-  const excl = exclWords.pt.size ? ' (' + exclWords.pt.size + ' excluded)' : '';
-  if (pool.length === 0) {
-    info.innerHTML = '<span style="color:var(--red)">No words match these filters.</span>';
-    if (btn) btn.disabled = true;
-  } else {
-    info.innerHTML = '<strong>' + pool.length + '</strong> word' + (pool.length !== 1 ? 's' : '') + ' match your filters' + excl + '.';
-    if (btn) btn.disabled = false;
-  }
-  renderExclList('pt');
-}
-
-function doPrint() {
-  let pool = getPtPool();
-  if (pool.length === 0) return;
-
-  const doShuffle = document.getElementById('ptShuffle').checked;
-  const showInfo  = document.getElementById('ptShowInfo').checked;
-  const maxQ = parseInt(document.getElementById('ptMaxQ').value) || 999;
-
-  if (doShuffle) pool = [...pool].sort(() => Math.random() - 0.5);
-
-  const levelVal = document.getElementById('ptLevel').value;
-  const catVals  = getCheckedVals('ptCat');
-  const filterDesc = [
-    levelVal ? levelVal.replace(/,/g, ' & ') : 'All levels',
-    (catVals.length && catVals.length < 7) ? catVals.map(v => v.charAt(0).toUpperCase() + v.slice(1) + 's').join(', ') : 'All types'
-  ].join(' — ');
-
-  let html;
-  if (ptSheetType === 'gram') {
-    const opts = {
-      decl:  document.getElementById('ptGramDecl')?.checked ?? true,
-      conj:  document.getElementById('ptGramConj')?.checked ?? true,
-      pp:    document.getElementById('ptGramPP')?.checked ?? true,
-      tense: document.getElementById('ptGramTense')?.checked ?? false,
-      maxQ:  parseInt(document.getElementById('ptGramMaxQ')?.value) || 20
-    };
-    html = buildGrammarSheet(pool, opts, filterDesc);
-  } else if (ptSheetType === 'lcwc') {
-    const lcwcMax = parseInt(document.getElementById('ptLCWCMaxQ')?.value) || 10;
-    html = buildLCWCSheet(pool, lcwcMax, showInfo, filterDesc);
-  } else {
-    html = buildTestSheet(pool, maxQ, showInfo, filterDesc);
-  }
-
-  const win = window.open('', '_blank');
-  if (!win) {
-    alert('Please allow pop-ups for this page to open the print preview.');
-    return;
-  }
-  win.document.open();
-  win.document.write(html);
-  win.document.close();
-}
-
-function ptStyles() {
-  return `@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap');
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Crimson Pro',Georgia,serif;font-size:11pt;color:#1a120a;background:#fff;padding:0}
-    .print-bar{background:#1a120a;color:#f5ede0;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:'Crimson Pro',serif;font-size:10pt}
-    .print-bar span{opacity:0.65;font-style:italic;font-size:9pt}
-    .print-bar-btns{display:flex;gap:8px}
-    .pbtn{padding:6px 16px;border:none;border-radius:4px;font-family:'Crimson Pro',serif;font-size:10pt;cursor:pointer;transition:background 0.15s}
-    .pbtn-print{background:#b8860b;color:#fff}.pbtn-print:hover{background:#d4a017}
-    .pbtn-close{background:rgba(245,237,224,0.15);color:#f5ede0;border:1px solid rgba(245,237,224,0.25)}.pbtn-close:hover{background:rgba(245,237,224,0.25)}
-    .sheet{padding:16mm 15mm}
-    h1{font-family:'IM Fell English',serif;font-size:16pt;margin-bottom:1.5mm}
-    .meta{font-size:9pt;color:#7a5c3e;margin-bottom:5mm;font-style:italic}
-    .header-row{display:flex;gap:8mm;align-items:baseline;margin-bottom:6mm;font-size:10pt;flex-wrap:wrap}
-    .field{display:inline-flex;align-items:baseline;gap:2mm}
-    .field-line{border-bottom:0.75pt solid #1a120a;min-width:55mm;display:inline-block}
-    .score-box{border:1pt solid #c4a882;padding:1.5mm 5mm;border-radius:2px;font-size:10pt;white-space:nowrap}
-    table{width:100%;border-collapse:collapse;margin-top:2mm}
-    th{font-family:'IM Fell English',serif;font-size:9pt;text-transform:uppercase;letter-spacing:0.05em;color:#7a5c3e;border-bottom:1.5pt solid #1a120a;padding:1.5mm 3mm;text-align:left}
-    td{padding:2mm 3mm;border-bottom:0.5pt solid #e0d0bc;vertical-align:middle;font-size:10.5pt;line-height:1.4}
-    tr:nth-child(even) td{background:#faf6f0}
-    .n{font-size:9pt;color:#a07850;width:7mm;text-align:right;padding-right:3mm}
-    .lat{font-family:'IM Fell English',serif;font-size:11pt}
-    .inf{display:block;font-style:italic;font-size:9pt;color:#5a3e28;margin-top:0.5mm}
-    .dir{font-size:8pt;color:#a07850;white-space:nowrap;width:18mm}
-    .ans{width:40%}.ans-line{border-bottom:0.75pt solid #c4a882;display:block;width:100%;height:5mm}
-    .write-cell{width:12%}.write-box{border:0.75pt solid #c4a882;height:8mm;border-radius:1px;margin:0.5mm 0}
-    td.write-cell:first-of-type{border-left:1.5pt dashed #c4a882}
-    .footer{margin-top:8mm;font-size:8pt;color:#a07850;font-style:italic}
-    .page-break{page-break-before:always;padding-top:16mm}
-    @media print{.print-bar{display:none!important}@page{margin:14mm 13mm}.sheet{padding:0}tr{page-break-inside:avoid}}`;
-}
-
-const printBarHTML = `<div class="print-bar">
-  <span>⎙ Ready to print or save as PDF</span>
-  <div class="print-bar-btns">
-    <button class="pbtn pbtn-print" onclick="window.print()">🖨 Print / Save as PDF</button>
-    <button class="pbtn pbtn-close" onclick="window.close()">✕ Close</button>
-  </div>
-</div>`;
-
-
-function buildGrammarSheet(pool, opts, filterDesc) {
-  const questions = [];
-  const cases = ['nominative','vocative','accusative','genitive','dative','ablative'];
-  const numbers = ['singular','plural'];
-
-  for (const w of pool) {
-    if (questions.length >= opts.maxQ) break;
-    const wt = w.type.toLowerCase();
-
-    if (opts.decl && wt.startsWith('noun')) {
-      const c = cases[Math.floor(Math.random() * cases.length)];
-      const n = numbers[Math.floor(Math.random() * 2)];
-      questions.push({
-        q: `Give the <strong>${c} ${n}</strong> of <em>${w.latin}</em> (${w.english})`,
-        a: `[${c} ${n} — use declension table]`,
-        hint: w.type
-      });
-    } else if (opts.pp && wt.startsWith('verb') && w.info && w.info.includes(',')) {
-      questions.push({
-        q: `Give the <strong>principal parts</strong> of <em>${w.latin}</em> (${w.english})`,
-        a: w.info,
-        hint: w.type
-      });
-    } else if (opts.conj && wt.startsWith('verb')) {
-      const tenses = ['present','imperfect','perfect'];
-      const persons = ['1st singular','3rd singular','3rd plural'];
-      const t = tenses[Math.floor(Math.random() * tenses.length)];
-      const p = persons[Math.floor(Math.random() * persons.length)];
-      questions.push({
-        q: `Give the <strong>${t} active ${p}</strong> of <em>${w.latin}</em> (${w.english})`,
-        a: `[conjugate using verb tables]`,
-        hint: w.type
-      });
-    } else if (opts.tense && wt.startsWith('verb')) {
-      const stem = w.latin.replace(/o$/, '');
-      questions.push({
-        q: `Identify the tense and person of <em>${stem}bat</em> (from <em>${w.latin}</em>)`,
-        a: 'imperfect, 3rd singular active',
-        hint: w.type
-      });
-    }
-  }
-
-  const qRows = questions.map((q, i) => `<tr>
-    <td class="n">${i+1}</td>
-    <td>${q.q}<br><span class="inf">${q.hint}</span></td>
-    <td class="ans"><span class="ans-line"></span></td>
-  </tr>`).join('');
-
-  const aRows = questions.map((q, i) => `<tr>
-    <td class="n">${i+1}</td>
-    <td>${q.q}</td>
-    <td style="font-style:italic;color:#5a3e28">${q.a}</td>
-  </tr>`).join('');
-
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Grammar & Parsing</title>
-  <style>${ptStyles()}</style></head><body>
-  ${printBarHTML}
-  <div class="sheet">
-  <h1>Grammar &amp; Parsing Test</h1>
-  <div class="meta">Mr J Easton &nbsp;·&nbsp; ${esc(filterDesc)}</div>
-  <div class="header-row">
-    <div class="field">Name: <span class="field-line">&nbsp;</span></div>
-    <div class="field">Form: <span class="field-line" style="min-width:25mm">&nbsp;</span></div>
-    <div class="field">Date: <span class="field-line" style="min-width:30mm">&nbsp;</span></div>
-    <div class="score-box">Score: &nbsp;&nbsp;&nbsp;&nbsp; / ${questions.length}</div>
-  </div>
-  <table><thead><tr><th>No.</th><th>Question</th><th>Answer</th></tr></thead>
-  <tbody>${qRows}</tbody></table>
-  </div>
-  <div class="page-break sheet">
-  <h1>Answer Key <span style="font-size:11pt;font-style:italic;color:#7a5c3e">— teacher only —</span></h1>
-  <div class="meta">${esc(filterDesc)}</div>
-  <table><thead><tr><th>No.</th><th>Question</th><th>Answer</th></tr></thead>
-  <tbody>${aRows}</tbody></table>
-  </div></body></html>`;
-}
-
-function buildTestSheet(pool, maxQ, showInfo, filterDesc) {
-  const lat2eng = document.getElementById('ptLat2Eng').checked;
-  const eng2lat = document.getElementById('ptEng2Lat').checked;
-
-  let questions = [];
-  pool.forEach(w => {
-    if (lat2eng) questions.push({type:'lat2eng', prompt:w.latin, info:w.info, answer:w.english});
-    if (eng2lat) questions.push({type:'eng2lat', prompt:w.english, info:'', answer:w.latin});
-  });
-  questions = questions.sort(() => Math.random() - 0.5).slice(0, maxQ);
-
-  const qRows = questions.map((q, i) => `<tr>
-    <td class="n">${i+1}</td>
-    <td><span class="${q.type==='lat2eng'?'lat':''}">${esc(q.prompt)}</span>${showInfo && q.info ? `<span class="inf">${esc(q.info)}</span>` : ''}</td>
-    <td class="dir">${q.type==='lat2eng'?'→ English':'→ Latin'}</td>
-    <td class="ans"><span class="ans-line"></span></td>
-  </tr>`).join('');
-
-  const aRows = questions.map((q, i) => `<tr>
-    <td class="n">${i+1}</td>
-    <td><span class="${q.type==='lat2eng'?'lat':''}">${esc(q.prompt)}</span></td>
-    <td>${esc(q.answer)}</td>
-  </tr>`).join('');
-
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Latin Vocab Test</title>
-  <style>${ptStyles()}</style></head><body>
-  ${printBarHTML}
-  <div class="sheet">
-  <h1>Latin Vocabulary Test</h1>
-  <div class="meta">Mr J Easton &nbsp;·&nbsp; ${esc(filterDesc)}</div>
-  <div class="header-row">
-    <div class="field">Name: <span class="field-line">&nbsp;</span></div>
-    <div class="field">Form: <span class="field-line" style="min-width:25mm">&nbsp;</span></div>
-    <div class="field">Date: <span class="field-line" style="min-width:30mm">&nbsp;</span></div>
-    <div class="score-box">Score: &nbsp;&nbsp;&nbsp;&nbsp; / ${questions.length}</div>
-  </div>
-  <table><thead><tr><th>No.</th><th>Word</th><th>Direction</th><th>Your answer</th></tr></thead>
-  <tbody>${qRows}</tbody></table>
-  <div class="footer">Common Entrance Prescribed Vocabulary</div>
-  </div>
-  <div class="page-break sheet">
-  <h1>Answer Key <span style="font-size:11pt;font-style:italic;color:#7a5c3e">— teacher use only —</span></h1>
-  <div class="meta">${esc(filterDesc)} · ${questions.length} questions</div>
-  <table><thead><tr><th>No.</th><th>Question</th><th>Answer</th></tr></thead>
-  <tbody>${aRows}</tbody></table>
-  </div></body></html>`;
-}
-
-function buildLCWCSheet(pool, maxQ, showInfo, filterDesc) {
-  const words = pool.slice(0, maxQ);
-  const rows = words.map((w, i) => `<tr>
-    <td class="n">${i+1}</td>
-    <td><span class="lat">${esc(w.latin)}</span>${showInfo && w.info ? `<span class="inf">${esc(w.info)}</span>` : ''}</td>
-    <td>${esc(w.english)}</td>
-    <td class="write-cell"><div class="write-box"></div></td>
-    <td class="write-cell"><div class="write-box"></div></td>
-    <td class="write-cell"><div class="write-box"></div></td>
-    <td class="write-cell"><div class="write-box"></div></td>
-    <td class="write-cell"><div class="write-box"></div></td>
-  </tr>`).join('');
-
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Look Cover Write Check</title>
-  <style>${ptStyles()}
-  @media print { @page { size: A4 landscape; margin: 10mm 12mm; } }
-  </style></head><body>
-  ${printBarHTML}
-  <div class="sheet" style="padding:10mm 12mm">
-  <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:1mm">
-    <h1 style="font-size:14pt">Look · Cover · Write · Check</h1>
-    <span style="font-size:8.5pt;color:#7a5c3e;font-style:italic">✂ Fold along the dotted line to cover Latin &amp; English whilst writing</span>
-  </div>
-  <div class="meta" style="margin-bottom:3mm">Mr J Easton &nbsp;·&nbsp; ${esc(filterDesc)} &nbsp;·&nbsp; ${words.length} words</div>
-  <table>
-    <thead><tr>
-      <th style="width:6mm">No.</th>
-      <th style="width:22%">Latin</th>
-      <th style="width:18%">English</th>
-      <th style="border-left:1.5pt dashed #c4a882;text-align:center">Write 1</th>
-      <th style="text-align:center">Write 2</th>
-      <th style="text-align:center">Write 3</th>
-      <th style="text-align:center">Write 4</th>
-      <th style="text-align:center">Write 5 ✓</th>
-    </tr></thead>
-    <tbody>${rows}</tbody>
-  </table>
-  <div class="footer" style="margin-top:5mm">Common Entrance Prescribed Vocabulary</div>
-  </div></body></html>`;
-}
-
-// ════════════════════════════════════════════
-// FLASHCARD ENGINE
-// ════════════════════════════════════════════
-let fcDeck = [], fcIndex = 0, fcKnown = 0, fcMissed = [], fcIsFlipped = false;
-
-function openFlashcards() {
-  document.getElementById('fcOverlay').classList.add('open');
-  updateFcPool();
-}
-function closeFlashcards() {
-  document.getElementById('fcOverlay').classList.remove('open');
-}
-document.getElementById('fcOverlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('fcOverlay')) closeFlashcards();
-});
-
-function toggleFcChip(el) {
-  el.classList.toggle('selected');
-  updateFcPool();
-}
-function toggleFcSingle(el) {
-  document.querySelectorAll('.fc-chip[data-group="fcmode"]').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-}
-
-function getFcSelected(group) {
-  return [...document.querySelectorAll(`.fc-chip[data-group="${group}"].selected`)].map(e => e.dataset.val);
-}
-
-function getFcPool(ignoreExcl) {
-  const levels    = getFcSelected('fclevel');
-  const typeChips = getFcSelected('fctype');
-  let pool = vocab.filter(w =>
-    levels.includes(w.level) &&
-    typeChips.some(t => w.type.toLowerCase().includes(t))
-  );
-  if (!ignoreExcl) {
-    const nounVals = getCheckedVals('fcNoun');
-    const verbVals = getCheckedVals('fcVerb');
-    const adjVals  = getCheckedVals('fcAdj');
-    pool = pool.filter(w => {
-      if (exclWords.fc.has(w.latin)) return false;
-      const wt = w.type.toLowerCase();
-      if (wt.startsWith('noun') && nounVals.length) return nounVals.some(v => wt === v || wt.startsWith(v));
-      if (wt.startsWith('verb') && verbVals.length) return verbVals.some(v => wt === v || wt.startsWith(v));
-      if (wt.startsWith('adjective') && adjVals.length) return adjVals.some(v => wt === v || wt.startsWith(v));
-      return true;
-    });
-  }
-  return pool;
-}
-
-function updateFcPool() {
-  const pool = getFcPool();
-  const info = document.getElementById('fcPoolInfo');
-  const btn  = document.getElementById('fcStartBtn');
-  const excl = exclWords.fc.size ? ' (' + exclWords.fc.size + ' excluded)' : '';
-  if (pool.length === 0) {
-    info.innerHTML = '<span style="color:var(--red)">No words match &mdash; select more filters.</span>';
-    if (btn) btn.disabled = true;
-  } else {
-    info.innerHTML = '<strong>' + pool.length + '</strong> word' + (pool.length !== 1 ? 's' : '') + ' in deck' + excl + '.';
-    if (btn) btn.disabled = false;
-  }
-  renderExclList('fc');
-}
-
-function startFlashcards(deckOverride) {
-  let pool = deckOverride || getFcPool();
-  if (!pool.length) return;
-  // shuffle
-  fcDeck = [...pool].sort(() => Math.random() - 0.5);
-  fcIndex = 0; fcKnown = 0; fcMissed = []; fcIsFlipped = false;
-
-  document.getElementById('fcSetup').style.display = 'none';
-  document.getElementById('fcSummary').classList.remove('active');
-  document.getElementById('fcCardArea').classList.add('active');
-  showFcCard();
-}
-
-function retryMissed() {
-  if (!fcMissed.length) return;
-  startFlashcards(fcMissed);
-}
-
-function resetFcToSetup() {
-  document.getElementById('fcCardArea').classList.remove('active');
-  document.getElementById('fcSummary').classList.remove('active');
-  document.getElementById('fcSetup').style.display = '';
-  updateFcPool();
-}
-
-function showFcCard() {
-  if (fcIndex >= fcDeck.length) { showFcSummary(); return; }
-  const w = fcDeck[fcIndex];
-  const mode = getFcSelected('fcmode')[0] || 'lat2eng';
-  const showInfo = document.getElementById('fcShowInfo').checked;
-  const isLat2Eng = mode === 'lat2eng' || (mode === 'mixed' && fcIndex % 2 === 0);
-
-  // Update card content
-  if (isLat2Eng) {
-    document.getElementById('fcFrontLabel').textContent = 'Latin';
-    document.getElementById('fcFrontWord').textContent = w.latin;
-    document.getElementById('fcFrontInfo').textContent = showInfo && w.info ? w.info : '';
-    document.getElementById('fcFrontType').textContent = w.type;
-    document.getElementById('fcBackLabel').textContent = 'English';
-    document.getElementById('fcBackWord').textContent = w.english;
-    document.getElementById('fcBackInfo').textContent = '';
-  } else {
-    document.getElementById('fcFrontLabel').textContent = 'English';
-    document.getElementById('fcFrontWord').textContent = w.english;
-    document.getElementById('fcFrontInfo').textContent = '';
-    document.getElementById('fcFrontType').textContent = w.type;
-    document.getElementById('fcBackLabel').textContent = 'Latin';
-    document.getElementById('fcBackWord').textContent = w.latin;
-    document.getElementById('fcBackInfo').textContent = showInfo && w.info ? w.info : '';
-  }
-
-  // Reset flip state
-  fcIsFlipped = false;
-  document.getElementById('fcCard').classList.remove('flipped');
-  const btnRow = document.getElementById('fcBtnRow');
-  btnRow.className = 'fc-btn-row pre-flip';
-
-  // Progress
-  const pct = Math.round((fcIndex / fcDeck.length) * 100);
-  document.getElementById('fcProgFill').style.width = pct + '%';
-  document.getElementById('fcProgLabel').textContent = `${fcIndex} / ${fcDeck.length}`;
-  document.getElementById('fcHeaderSub').textContent = `Card ${fcIndex + 1} of ${fcDeck.length} · ${fcKnown} known`;
-}
-
-function flipCard() {
-  if (fcIsFlipped) return;
-  fcIsFlipped = true;
-  document.getElementById('fcCard').classList.add('flipped');
-  document.getElementById('fcBtnRow').className = 'fc-btn-row post-flip';
-}
-
-function rateCard(known) {
-  if (!fcIsFlipped) { flipCard(); return; }
-  if (known) { fcKnown++; } else { fcMissed.push(fcDeck[fcIndex]); }
-  fcIndex++;
-  showFcCard();
-}
-
-function showFcSummary() {
-  document.getElementById('fcCardArea').classList.remove('active');
-  const summary = document.getElementById('fcSummary');
-  summary.classList.add('active');
-  const total = fcDeck.length;
-  const pct = Math.round((fcKnown / total) * 100);
-  document.getElementById('fcScoreBig').textContent = `${fcKnown} / ${total}`;
-  document.getElementById('fcScoreSub').textContent = `${pct}% · ${fcMissed.length} to review`;
-  document.getElementById('fcRetryBtn').disabled = fcMissed.length === 0;
-  document.getElementById('fcHeaderSub').textContent = `Session complete`;
-}
-
-// ── PRINTABLE FLASHCARDS ──
-function printFlashcards() {
-  const pool = getFcPool();
-  if (!pool.length) return;
-  const mode = getFcSelected('fcmode')[0] || 'lat2eng';
-  const showInfo = document.getElementById('fcShowInfo').checked;
-
-  let cards = '';
-  pool.forEach((w, i) => {
-    const front = mode === 'eng2lat' ? w.english : w.latin;
-    const back  = mode === 'eng2lat' ? w.latin   : w.english;
-    const info  = showInfo && w.info ? `<div class="fc-info">${w.info}</div>` : '';
-    const lvlClass = `lbadge-${w.level}`;
-    cards += `
-      <div class="fc-print-card">
-        <div class="fc-print-face front">
-          <div class="fc-print-word">${front}</div>
-          ${info}
-          <div class="fc-print-meta"><span class="${lvlClass}">${w.level}</span> <span class="fc-type">${w.type}</span></div>
-        </div>
-      </div>
-      <div class="fc-print-card">
-        <div class="fc-print-face back">
-          <div class="fc-print-word">${back}</div>
-          <div class="fc-print-meta"><span class="${lvlClass}">${w.level}</span></div>
-        </div>
-      </div>`;
-  });
-
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Flashcards — CE Latin</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap');
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Crimson Pro',serif;background:#fff;}
-    .print-bar{background:#1a120a;color:#f5ede0;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:'Crimson Pro',serif;font-size:10pt}
-    .pbtn{padding:6px 16px;border:none;border-radius:4px;font-family:'Crimson Pro',serif;font-size:10pt;cursor:pointer;background:#b8860b;color:#fff}
-    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4mm;padding:8mm;page-break-inside:avoid}
-    .fc-print-card{border:1.5pt solid #c4a882;border-radius:4px;min-height:45mm;display:flex;align-items:center;justify-content:center;padding:6mm 4mm;break-inside:avoid}
-    .fc-print-face{text-align:center;width:100%}
-    .front{background:#fffdf8}
-    .back{background:#f5ede0}
-    .fc-print-word{font-family:'IM Fell English',serif;font-size:13pt;color:#1a120a;margin-bottom:3mm;line-height:1.3}
-    .fc-info{font-size:8pt;color:#5a3e28;font-style:italic;margin-bottom:2mm}
-    .fc-print-meta{font-size:7.5pt;color:#a07850}
-    .fc-type{font-style:italic}
-    .lbadge-L1{color:#1a6b3c;font-weight:600}
-    .lbadge-L2{color:#1a4b8b;font-weight:600}
-    .lbadge-L3{color:#7a1a1a;font-weight:600}
-    .fold-note{text-align:center;font-size:8pt;color:#a07850;font-style:italic;padding:4mm 0 0;display:block}
-    @media print{.print-bar{display:none}body{padding:0}}
-  </style></head><body>
-  <div class="print-bar">
-    <span>CE Latin Flashcards · ${pool.length} cards · ${mode === 'eng2lat' ? 'English → Latin' : 'Latin → English'}</span>
-    <button class="pbtn" onclick="window.print()">🖨 Print / Save as PDF</button>
-  </div>
-  <span class="fold-note">Print and cut along the grid lines — front and back cards alternate (fold or cut &amp; back-to-back)</span>
-  <div class="grid">${cards}</div>
-  </body></html>`;
-
-  const win = window.open('', '_blank');
-  if (!win) { alert('Allow pop-ups to open the print preview.'); return; }
-  win.document.write(html);
-  win.document.close();
-}
-
-// ════════════════════════════════════════════
-// GRAMMAR / PARSING QUESTION GENERATOR
-// ════════════════════════════════════════════
-
-// Tables for parsing questions
-const NOUN_CASES = ['nominative','vocative','accusative','genitive','dative','ablative'];
-const NOUN_NUMBERS = ['singular','plural'];
-const VERB_PERSONS = ['1st singular','2nd singular','3rd singular','1st plural','2nd plural','3rd plural'];
-const VERB_TENSES = ['present','imperfect','perfect','future','pluperfect'];
-
-// Noun endings by declension
-const NOUN_ENDINGS = {
-  '1f':  { nom:['a','ae'],  voc:['a','ae'],  acc:['am','as'], gen:['ae','arum'], dat:['ae','is'],  abl:['a','is']  },
-  '2m':  { nom:['us','i'],  voc:['e','i'],   acc:['um','os'], gen:['i','orum'],  dat:['o','is'],   abl:['o','is']  },
-  '2n':  { nom:['um','a'],  voc:['um','a'],  acc:['um','a'],  gen:['i','orum'],  dat:['o','is'],   abl:['o','is']  },
-  '3m':  { nom:['—','es'],  voc:['—','es'],  acc:['em','es'], gen:['is','um'],   dat:['i','ibus'],  abl:['e','ibus'] },
-  '3n':  { nom:['—','a'],   voc:['—','a'],   acc:['—','a'],   gen:['is','um'],   dat:['i','ibus'],  abl:['e','ibus'] },
-  '3f':  { nom:['—','es'],  voc:['—','es'],  acc:['em','es'], gen:['is','um'],   dat:['i','ibus'],  abl:['e','ibus'] },
-  '4m':  { nom:['us','us'], voc:['us','us'], acc:['um','us'], gen:['us','uum'],  dat:['ui','ibus'], abl:['u','ibus'] },
-  '5f':  { nom:['es','es'], voc:['es','es'], acc:['em','es'], gen:['ei','erum'], dat:['ei','ebus'], abl:['e','ebus'] },
-};
-
-// Generate a parsing question for a vocab word
-function makeParsingQuestion(w) {
-  const typeL = w.type.toLowerCase();
-  const qs = [];
-
-  // Noun questions — ask for a specific case/number ending
-  if (typeL.startsWith('noun')) {
-    const decl = typeL.replace('noun','').trim(); // e.g. "1f", "2m", "3n"
-    const endings = NOUN_ENDINGS[decl];
-    if (endings) {
-      const caseName = NOUN_CASES[Math.floor(Math.random() * NOUN_CASES.length)];
-      const numIdx   = Math.floor(Math.random() * 2);
-      const numName  = NOUN_NUMBERS[numIdx];
-      const endingArr = endings[caseName.substring(0,3)];
-      if (endingArr) {
-        const ending = endingArr[numIdx];
-        qs.push({
-          type: 'parsing',
-          question: `Give the <strong>${caseName} ${numName}</strong> of <em>${w.latin}</em>`,
-          hint: `${w.latin} (${w.english}) — ${w.type}`,
-          answer: ending === '—' ? `same as nominative (varies)` : `ending: <strong>-${ending}</strong>`,
-          acceptPattern: new RegExp(ending === '—' ? '.' : ending.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i'),
-          autoMark: true
-        });
-      }
-    }
-  }
-
-  // Verb questions — principal parts or tense forms
-  if (typeL.startsWith('verb')) {
-    const conjNum = parseInt(typeL.replace(/\D/g,'')) || 1;
-    const ppParts = (w.info || '').split(',').map(s => s.trim()).filter(Boolean);
-
-    // Principal parts question
-    if (ppParts.length >= 2) {
-      qs.push({
-        type: 'parsing',
-        question: `Give all the <strong>principal parts</strong> of <em>${w.latin}</em> (${w.english})`,
-        hint: `${w.type}`,
-        answer: ppParts.join(', '),
-        autoMark: false
-      });
-    }
-
-    // Tense identification — give a form, ask what it is
-    const tenseExamples = {
-      present: `${w.latin.replace(/o$/,'at')}`,
-      imperfect: `${w.latin.replace(/o$/,'ebat')}`,
-      perfect: ppParts[1] ? ppParts[1].replace(/i$/,'it') : null,
-    };
-    const tenseKeys = Object.keys(tenseExamples).filter(k => tenseExamples[k]);
-    if (tenseKeys.length) {
-      const tense = tenseKeys[Math.floor(Math.random() * tenseKeys.length)];
-      const form  = tenseExamples[tense];
-      qs.push({
-        type: 'parsing',
-        question: `What tense and person is <em>${form}</em>? (from <em>${w.latin}</em>)`,
-        hint: `${w.latin} — ${w.english}`,
-        answer: `${tense}, 3rd person singular`,
-        autoMark: false
-      });
-    }
-  }
-
-  // Adjective — give a form in a specific gender/case
-  if (typeL.startsWith('adjective')) {
-    const isDecl3 = typeL.includes('3');
-    const genders = isDecl3 ? ['masculine/feminine','neuter'] : ['masculine','feminine','neuter'];
-    const cases   = ['nominative','accusative','genitive','dative','ablative'];
-    const g = genders[Math.floor(Math.random() * genders.length)];
-    const c = cases[Math.floor(Math.random() * cases.length)];
-    const n = Math.random() > 0.5 ? 'singular' : 'plural';
-    qs.push({
-      type: 'parsing',
-      question: `Give the <strong>${g} ${c} ${n}</strong> of <em>${w.latin}</em> (${w.english})`,
-      hint: `${w.type}`,
-      answer: `(declines like ${isDecl3 ? 'fortis/forte' : 'bonus/bona/bonum'} — check grammar tables)`,
-      autoMark: false
-    });
-  }
-
-  if (!qs.length) {
-    // Fallback: basic meaning
-    qs.push({
-      type: 'parsing',
-      question: `Identify the grammatical type and give the meaning of <em>${w.latin}</em>`,
-      hint: '',
-      answer: `${w.type} — ${w.english}`,
-      autoMark: false
-    });
-  }
-
-  return qs[Math.floor(Math.random() * qs.length)];
-}
-
-// ── Hook grammar parsing into toggleChip ──
-const _origToggleChip = toggleChip;
-// Extend toggleChip to show/hide parsing note
-function toggleChip(el) {
-  el.classList.toggle('selected');
-  updatePoolInfo();
-  // Show grammar note if parsing selected
-  const parsingNote = document.getElementById('tgParsingNote');
-  if (parsingNote) {
-    const parsingSelected = [...document.querySelectorAll('.tg-chip[data-group="qtype"][data-val="parsing"].selected')].length > 0;
-    parsingNote.style.display = parsingSelected ? 'block' : 'none';
-  }
-}
-
-// ── Unified generateTest ──
-async function generateTest() {
-  const pool    = getPoolWords();
-  const qtypes  = getSelected('qtype');
-  const numQ    = parseInt(document.getElementById('tgNumQ')?.value) || 20;
-  const diff    = document.getElementById('tgDifficulty')?.value || 'medium';
-  if (pool.length < 5 || qtypes.length === 0) return;
-
-  tgSentenceResults = {};
-  tgMarked = false;
-  document.getElementById('tgSetup').style.display = 'none';
-  document.getElementById('tgTest').classList.add('active');
-  document.getElementById('tgHeaderTitle').textContent = 'Generating test\u2026';
-  document.getElementById('tgHeaderSub').textContent = 'Please wait a moment.';
-  document.getElementById('tgTestBody').innerHTML = '<div class="tg-generating">&#10022; Magister is composing your test&hellip;<br><br><em>This usually takes 10&ndash;20 seconds.</em></div>';
-  document.getElementById('tgSubmitBtn').style.display = '';
-  document.getElementById('tgProgressFill').style.width = '0%';
-  document.getElementById('tgProgressLabel').textContent = '';
-  document.getElementById('tgFooterInfo').textContent = '';
-
-  const hasParsing = qtypes.includes('parsing');
-  const hasSent    = qtypes.includes('sentence') || qtypes.includes('engsentence');
-  const hasWords   = qtypes.includes('lat2eng')  || qtypes.includes('eng2lat');
-
-  // Read ratio inputs
-  let pW = parseInt(document.getElementById('tgPctWord')?.value ?? '60') || 0;
-  let pS = parseInt(document.getElementById('tgPctSent')?.value ?? '30') || 0;
-  let pG = parseInt(document.getElementById('tgPctGram')?.value ?? '10') || 0;
-  if (!hasWords)   pW = 0;
-  if (!hasSent)    pS = 0;
-  if (!hasParsing) pG = 0;
-  const pTot  = pW + pS + pG || 1;
-  const wdCt  = Math.round(numQ * pW / pTot);
-  const stCt  = Math.round(numQ * pS / pTot);
-  const grCt  = numQ - wdCt - stCt;
-
-  // Generate grammar questions locally
-  const shuffled = shuffle([...pool]);
-  const gramQs = (hasParsing && grCt > 0)
-    ? shuffled.slice(0, Math.min(grCt * 3, pool.length)).map(w => makeParsingQuestion(w)).slice(0, grCt)
-    : [];
-
-  if (!hasWords && !hasSent) { renderMixedTest(gramQs, []); return; }
-
-  // Build API prompt for word + sentence questions
-  const vocabLines = shuffled.slice(0, 80).map(w => w.latin + ' = ' + w.english + ' (' + w.type + ', ' + w.level + ')').join('\n');
-  const diffDesc = { simple:'short simple sentences (subject + verb + object).', medium:'medium sentences with adjectives, prepositions and adverbs.', hard:'complex sentences with subordinate clauses, dative or ablative.' }[diff];
-  const wordTypes = qtypes.filter(q => q !== 'parsing' && q !== 'sentence' && q !== 'engsentence');
-  const sentTypes = qtypes.filter(q => q === 'sentence' || q === 'engsentence');
-  const wdEach = wordTypes.length ? Math.ceil(wdCt / wordTypes.length) : 0;
-  const stEach = sentTypes.length ? Math.ceil(stCt / sentTypes.length) : 0;
-  const qtLines = [
-    ...wordTypes.map(t => '- ' + wdEach + ' of type "' + t + '": ' + (t === 'lat2eng' ? 'give Latin word, student gives English' : 'give English, student gives Latin headword')),
-    ...sentTypes.map(t => '- ' + stEach + ' of type "' + t + '": ' + (t === 'sentence' ? 'Latin to English. Difficulty: ' + diffDesc : 'English to Latin. Short, pool vocab only.'))
-  ];
-  const totalApi = wdCt + stCt;
-  const prompt = 'You are a Latin exam setter for CE 13+ prep school students (ages 10-13).\n\nGenerate exactly ' + totalApi + ' questions using ONLY vocabulary from:\n' + vocabLines + '\n\nDistribution:\n' + qtLines.join('\n') + '\n\nReturn ONLY a valid JSON array, no markdown.\nEach item: {"type":"lat2eng|eng2lat|sentence|engsentence","prompt":"...","answer":"...","note":"brief grammar note or empty"}\n\nRules: only pool words; grammatically correct Latin; mix types; unambiguous answers.';
-
-  try {
-    const resp = await fetch('/api/anthropic', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4000,
-        messages: [{ role: 'user', content: prompt }] })
-    });
-    const data = await resp.json();
-    let raw = (data.content?.find(b => b.type === 'text')?.text) || '[]';
-    raw = raw.replace(/```json|```/g, '').trim();
-    const jS = raw.indexOf('['), jE = raw.lastIndexOf(']');
-    const aiQs = jS !== -1 ? JSON.parse(raw.slice(jS, jE + 1)) : [];
-    renderMixedTest(gramQs, aiQs);
-  } catch(err) {
-    if (gramQs.length) { renderMixedTest(gramQs, []); }
-    else {
-      document.getElementById('tgTestBody').innerHTML = '<div class="tg-generating" style="color:var(--red)">Something went wrong. Please try again.<br><small>' + esc(String(err)) + '</small></div>';
-      document.getElementById('tgHeaderTitle').textContent = 'Error';
-      document.getElementById('tgHeaderSub').textContent = 'Generation failed.';
-    }
-  }
-}
-
-function renderMixedTest(gramQs, aiQs) {
-  const all = [...gramQs, ...aiQs].sort(() => Math.random() - 0.5);
-  tgQuestions = all;
-  const total = all.length;
-  document.getElementById('tgHeaderTitle').textContent = `Test — ${total} Questions`;
-  document.getElementById('tgHeaderSub').textContent = 'Answer all questions, then click "Mark my test".';
-  document.getElementById('tgProgressLabel').textContent = `0 / ${total} answered`;
-  document.getElementById('tgTestBody').innerHTML = all.map((q, i) => {
-    const isParsing  = q.type === 'parsing';
-    const isSentence = q.type === 'sentence' || q.type === 'engsentence';
-    const badge      = isParsing ? 'grammar' : isSentence ? 'sentence' : 'vocab';
-    const badgeLabel = isParsing ? '🔍 Grammar'
-      : { lat2eng:'Latin → English', eng2lat:'English → Latin',
-          sentence:'Translate into English', engsentence:'Translate into Latin' }[q.type] || q.type;
-    // parsing uses q.question; AI vocab/sentence questions use q.prompt
-    const displayText = isParsing ? (q.question || '') : esc(q.prompt || q.question || '');
-    const hintHtml = isParsing && q.hint
-      ? `<div class="tg-q-hint">${esc(q.hint)}</div>` : '';
-    if (isSentence) {
-      return `<div class="tg-question" id="tgQ${i}">
-        <div class="tg-q-meta">
-          <span class="tg-q-num">Q${i+1}</span>
-          <span class="tg-q-badge ${badge}">${badgeLabel}</span>
-        </div>
-        <div class="tg-q-text">${displayText}</div>
-        <textarea class="tg-answer-input" id="tgAns${i}" rows="2" placeholder="Write your translation here…" oninput="updateTgProgress()"></textarea>
-        <div class="tg-feedback" id="tgMark${i}" style="display:none">
-          <div class="tg-feedback-text" id="tgModel${i}"></div>
-          <div class="tg-self-mark-btns" id="tgSelfBtns${i}" style="display:none">
-            <button class="tg-mark-btn correct" onclick="selfMark(${i},true)">✓ I got it right</button>
-            <button class="tg-mark-btn wrong" onclick="selfMark(${i},false)">✗ I got it wrong</button>
-          </div>
-        </div>
-      </div>`;
-    }
-    return `<div class="tg-question" id="tgQ${i}">
-      <div class="tg-q-meta">
-        <span class="tg-q-num">Q${i+1}</span>
-        <span class="tg-q-badge ${badge}">${badgeLabel}</span>
-      </div>
-      <div class="tg-q-text">${displayText}</div>
-      ${hintHtml}
-      <input type="text" class="tg-answer-input" id="tgAns${i}" placeholder="Your answer…"
-        oninput="updateTgProgress()" onkeydown="if(event.key==='Enter'){event.preventDefault();focusNextQ(${i})}">
-      <div class="tg-feedback" id="tgMark${i}" style="display:none">
-        <div class="tg-feedback-text" id="tgModel${i}"></div>
-        <div class="tg-self-mark-btns" id="tgSelfBtns${i}" style="display:none"></div>
-      </div>
-    </div>`;
-  }).join('');
-  updateTgProgress();
-}
-
-
-// ── TAB SWITCHER ──
 function switchTab(tab) {
-  const vocabPanel = document.getElementById('vocabPanel');
-  const grammarPanel = document.getElementById('grammarPanel');
+  // Hide all panels
+  ['vocabPanel','grammarPanel','resourcesPanel'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  // Show selected panel
+  const panelMap = { vocab:'vocabPanel', grammar:'grammarPanel', resources:'resourcesPanel' };
+  const panel = document.getElementById(panelMap[tab]);
+  if (panel) panel.style.display = 'block';
+
+  // Update tab button active state
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => {
-    if (b.textContent.includes(tab === 'vocab' ? 'Vocabulary' : 'Grammar')) b.classList.add('active');
+    const txt = b.textContent.toLowerCase();
+    if ((tab === 'vocab' && txt.includes('vocab')) ||
+        (tab === 'grammar' && txt.includes('grammar')) ||
+        (tab === 'resources' && txt.includes('resource'))) {
+      b.classList.add('active');
+    }
   });
-  if (tab === 'vocab') {
-    vocabPanel.classList.remove('hidden');
-    grammarPanel.classList.remove('active');
-  } else {
-    vocabPanel.classList.add('hidden');
-    grammarPanel.classList.add('active');
-  }
+
+  // Apply CE level filter after showing panel
+  if (typeof applyCEFilter === 'function') applyCEFilter();
 }
 
-sortBy('latin');
+
+// ── CE LEVEL FILTER ──────────────────────────────────────────
+window._ceLevel = 1; // default: CE1
+
+function setCELevel(level) {
+  window._ceLevel = level;
+
+  // Update button states
+  [1, 2, 3].forEach(n => {
+    const btn = document.getElementById('ceBtn' + n);
+    if (btn) btn.classList.toggle('active', n === level);
+  });
+
+  // Update note text
+  const note = document.getElementById('ceFilterNote');
+  if (note) {
+    const labels = {
+      1: 'Showing Level 1 content only',
+      2: 'Showing Levels 1 & 2',
+      3: 'Showing all levels (1, 2 & 3)',
+    };
+    note.textContent = labels[level] || '';
+  }
+
+  applyCEFilter();
+}
+
+function applyCEFilter() {
+  const level = window._ceLevel || 1;
+
+  // 1. Vocab table — re-render (respects _ceLevel via matchCE in renderTable)
+  if (typeof renderTable === 'function') renderTable();
+
+  // 2. Grammar table-wraps and rows tagged with data-ce-min
+  document.querySelectorAll('[data-ce-min]').forEach(el => {
+    const min = parseInt(el.getAttribute('data-ce-min')) || 1;
+    el.classList.toggle('ce-hidden', min > level);
+  });
+
+  // 3. Individual table rows tagged with data-ce-min
+  document.querySelectorAll('tr[data-ce-min]').forEach(row => {
+    const min = parseInt(row.getAttribute('data-ce-min')) || 1;
+    row.classList.toggle('ce-hidden', min > level);
+  });
+
+  // 4. Always restore gram-grid visibility first, then hide empty ones
+  document.querySelectorAll('.gram-grid').forEach(grid => {
+    grid.style.display = '';  // reset first
+  });
+  document.querySelectorAll('.gram-grid').forEach(grid => {
+    const wraps = grid.querySelectorAll('.gram-table-wrap');
+    if (wraps.length === 0) return;
+    const anyVisible = Array.from(wraps).some(w => !w.classList.contains('ce-hidden'));
+    if (!anyVisible) grid.style.display = 'none';
+  });
+
+  // 5. Always restore gram-section visibility first, then hide fully-empty ones
+  document.querySelectorAll('.gram-section').forEach(section => {
+    section.classList.remove('ce-hidden');  // reset first
+  });
+  document.querySelectorAll('.gram-section[data-ce-min]').forEach(section => {
+    const min = parseInt(section.getAttribute('data-ce-min')) || 1;
+    if (min > level) section.classList.add('ce-hidden');
+  });
+}
+
+// Run on page load
+document.addEventListener('DOMContentLoaded', function() {
+  sortBy('latin');
+  // Set initial tab — vocab visible, others hidden
+  switchTab('vocab');
+  // Apply CE1 filter (switchTab calls applyCEFilter, but setCELevel also updates buttons)
+  setCELevel(1);
+});
+
 </script>
 </body>
 </html>
