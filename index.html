@@ -482,26 +482,147 @@
     min-height: 0;
   }
 
-  .filter-chip {
+  /* ── MULTI-SELECT TYPE FILTER ── */
+  .type-filter-wrap {
+    position: relative;
+    flex-shrink: 0;
+  }
+  .type-filter-btn {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    background: rgba(184,134,11,0.12);
-    border: 1px solid rgba(184,134,11,0.3);
-    color: var(--ink-light);
-    padding: 3px 10px;
-    border-radius: 12px;
-    font-size: 0.8rem;
+    gap: 7px;
+    padding: 0 12px;
+    height: 34px;
+    background: var(--parchment);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--ink);
+    font-family: 'Crimson Pro', serif;
+    font-size: 0.95rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.15s;
+  }
+  .type-filter-btn:hover { border-color: var(--gold); }
+  .type-filter-btn.active { border-color: var(--gold); background: rgba(184,134,11,0.08); }
+
+  .type-filter-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 200;
+    background: var(--parchment);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.13);
+    min-width: 280px;
+    max-height: 420px;
+    overflow-y: auto;
+    padding: 8px 0;
+  }
+  .type-filter-panel.open { display: block; }
+
+  .tf-group { border-bottom: 1px solid rgba(196,168,130,0.2); padding: 6px 0; }
+  .tf-group:last-child { border-bottom: none; }
+
+  .tf-group-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 14px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.1s;
+  }
+  .tf-group-header:hover { background: rgba(184,134,11,0.07); }
+  .tf-group-header label {
+    font-family: 'IM Fell English', serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    flex: 1;
+  }
+  .tf-group-header .tf-all-badge {
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+    font-style: italic;
     font-family: 'Crimson Pro', serif;
   }
 
-  .filter-chip button {
-    background: none; border: none; cursor: pointer;
-    color: var(--ink-faint); font-size: 0.85rem; line-height: 1;
-    padding: 0;
+  .tf-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 14px 4px 30px;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .tf-item:hover { background: rgba(184,134,11,0.07); }
+  .tf-item label {
+    font-family: 'Crimson Pro', serif;
+    font-size: 0.88rem;
+    color: var(--ink-light);
+    cursor: pointer;
+    flex: 1;
   }
 
-  .filter-chip button:hover { color: var(--red); }
+  .tf-item input[type=checkbox],
+  .tf-group-header input[type=checkbox] {
+    width: 14px; height: 14px;
+    accent-color: var(--gold);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .tf-clear-row {
+    padding: 6px 14px 4px;
+    display: flex;
+    justify-content: flex-end;
+    border-bottom: 1px solid rgba(196,168,130,0.2);
+  }
+  .tf-clear-btn {
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Crimson Pro', serif;
+    padding: 2px 6px;
+    border-radius: 3px;
+    transition: color 0.1s;
+  }
+  .tf-clear-btn:hover { color: var(--red, #b00); }
+
+  /* Active filter chips below search bar */
+  .active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 4px 0 0;
+    min-height: 0;
+  }
+  .active-filters:empty { display: none; }
+  .af-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(184,134,11,0.12);
+    border: 1px solid rgba(184,134,11,0.35);
+    color: var(--ink-light);
+    padding: 2px 8px 2px 10px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-family: 'Crimson Pro', serif;
+    white-space: nowrap;
+  }
+  .af-chip button {
+    background: none; border: none; cursor: pointer;
+    color: var(--ink-faint); font-size: 0.9rem; line-height: 1;
+    padding: 0 0 0 2px; display: flex; align-items: center;
+  }
+  .af-chip button:hover { color: var(--red, #b00); }
 
   /* ── RESPONSIVE ── */
   @media (max-width: 640px) {
@@ -1220,14 +1341,14 @@
   .tab-btn.active { color: var(--gold-light); border-bottom-color: var(--gold-light); }
 
   /* ── GRAMMAR PANEL ── */
-  #grammarPanel { padding: 24px 28px 60px; max-width: 1300px; margin: 0 auto; }
-  #resourcesPanel { padding: 24px 28px 60px; max-width: 1000px; margin: 0 auto; }
+  #grammarPanel { padding: 28px 32px 80px; max-width: 1400px; margin: 0 auto; }
+  #resourcesPanel { padding: 28px 32px 80px; max-width: 1000px; margin: 0 auto; }
   #vocabPanel { display: block; }
 
-  .gram-section { margin-bottom: 36px; }
+  .gram-section { margin-bottom: 48px; }
   .gram-section-title {
     font-family: 'IM Fell English', serif; font-size: 1.3rem;
-    color: var(--ink); margin-bottom: 14px; padding-bottom: 6px;
+    color: var(--ink); margin-bottom: 20px; padding-bottom: 8px;
     border-bottom: 2px solid var(--border);
     display: flex; align-items: baseline; gap: 10px;
   }
@@ -1235,33 +1356,56 @@
     font-family: 'Crimson Pro', serif; font-size: 0.8rem;
     color: var(--ink-faint); font-style: italic; font-weight: 400;
   }
-  .gram-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; align-items: start; }
-  .gram-table-wrap { min-width: 0; }
-  .gram-table-wrap h4 {
-    font-family: 'IM Fell English', serif; font-size: 0.95rem;
-    color: var(--ink-light); margin-bottom: 6px; font-style: italic;
+
+  /* Grid: auto-fill with generous min width and gap so tables never squeeze */
+  .gram-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 28px;
+    align-items: start;
   }
+
+  /* Table wrap: add a subtle card background and breathing room */
+  .gram-table-wrap {
+    min-width: 0;
+    background: rgba(255,252,245,0.6);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .gram-table-wrap h4 {
+    font-family: 'IM Fell English', serif; font-size: 0.98rem;
+    color: var(--ink); margin-bottom: 12px; font-style: italic;
+    line-height: 1.4;
+  }
+
+  /* Table itself sits inside the card — no double border */
   .gram-table {
     width: 100%; border-collapse: collapse;
-    background: rgba(255,252,245,0.85);
-    border: 1px solid var(--border); border-radius: 5px; overflow: hidden;
-    font-size: 0.88rem; box-shadow: 0 1px 6px var(--shadow);
+    background: transparent;
+    border: none;
+    font-size: 0.88rem;
   }
   .gram-table thead tr { background: var(--ink-light); }
   .gram-table thead th {
-    color: var(--parchment); padding: 7px 10px;
+    color: var(--parchment); padding: 8px 12px;
     font-family: 'IM Fell English', serif; font-weight: 400;
     font-size: 0.8rem; letter-spacing: 0.04em; text-align: left;
   }
   .gram-table thead th.c { text-align: center; }
-  .gram-table tbody tr:nth-child(even) { background: rgba(196,168,130,0.08); }
-  .gram-table tbody tr:hover { background: rgba(184,134,11,0.07); }
+  .gram-table tbody tr:nth-child(even) { background: rgba(196,168,130,0.1); }
+  .gram-table tbody tr:hover { background: rgba(184,134,11,0.08); }
   .gram-table td {
-    padding: 5px 10px; border-bottom: 1px solid rgba(196,168,130,0.22);
-    vertical-align: middle; line-height: 1.4;
+    padding: 7px 12px; border-bottom: 1px solid rgba(196,168,130,0.25);
+    vertical-align: middle; line-height: 1.5;
   }
   .gram-table tbody tr:last-child td { border-bottom: none; }
-  .gram-table td.lbl { font-family:'IM Fell English',serif; font-size:0.85rem; color:var(--ink-faint); white-space:nowrap; font-style:italic; }
+  .gram-table td.lbl {
+    font-family:'IM Fell English',serif; font-size:0.85rem;
+    color:var(--ink-faint); white-space:nowrap; font-style:italic;
+    padding-right: 16px;
+  }
   .gram-table td.lat { font-family:'IM Fell English',serif; font-size:0.92rem; }
   .gram-table td.c   { text-align:center; }
   .gram-table td.nt  { font-size:0.8rem; color:var(--ink-faint); font-style:italic; }
@@ -1270,7 +1414,28 @@
     letter-spacing:0.06em; text-transform:uppercase;
     color:var(--ink-faint); padding:3px 10px;
   }
-  .gram-note { font-size:0.82rem; color:var(--ink-faint); font-style:italic; margin-top:5px; line-height:1.5; }
+  .gram-note {
+    font-size:0.82rem; color:var(--ink-faint); font-style:italic;
+    margin-top: 10px; line-height: 1.5; padding-top: 6px;
+    border-top: 1px solid rgba(196,168,130,0.2);
+  }
+
+  /* Wide tables (3+ data columns) should span full row */
+  .gram-table-wrap.wide { grid-column: 1 / -1; }
+
+  /* Responsive breakpoints for grammar grid */
+  @media (max-width: 900px) {
+    .gram-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    #grammarPanel { padding: 20px 18px 60px; }
+  }
+  @media (max-width: 600px) {
+    .gram-grid { grid-template-columns: 1fr; gap: 16px; }
+    #grammarPanel { padding: 16px 12px 48px; }
+    .gram-table-wrap { padding: 12px 14px 14px; }
+    .gram-table td { padding: 6px 8px; }
+    .gram-table thead th { padding: 7px 8px; }
+    .gram-section { margin-bottom: 36px; }
+  }
   .acc  { display:inline-block;padding:1px 7px;border-radius:10px;font-size:0.76rem;background:rgba(26,75,139,0.1);color:var(--l2);border:1px solid rgba(26,75,139,0.2); }
   .abl  { display:inline-block;padding:1px 7px;border-radius:10px;font-size:0.76rem;background:rgba(122,26,26,0.1);color:var(--l3);border:1px solid rgba(122,26,26,0.2); }
   .dat  { display:inline-block;padding:1px 7px;border-radius:10px;font-size:0.76rem;background:rgba(122,60,0,0.1);color:#6a3800;border:1px solid rgba(122,60,0,0.2); }
@@ -1660,21 +1825,18 @@
       </svg>
       <input type="text" id="searchInput" placeholder="Search Latin, English…" oninput="renderTable()">
     </div>
-    <select id="filterType" onchange="updateSubFilter(); renderTable()">
-      <option value="">All word classes</option>
-      <option value="noun">Nouns</option>
-      <option value="verb">Verbs</option>
-      <option value="adjective">Adjectives</option>
-      <option value="adverb">Adverbs</option>
-      <option value="preposition">Prepositions</option>
-      <option value="conjunction">Conjunctions</option>
-      <option value="pronoun">Pronouns</option>
-      <option value="cardinal">Numbers</option>
-      <option value="question word">Question words</option>
-    </select>
-    <select id="filterSub" onchange="renderTable()" style="display:none">
-      <option value="">All subtypes</option>
-    </select>
+
+    <!-- Multi-select type filter -->
+    <div class="type-filter-wrap" id="typeFilterWrap">
+      <button class="type-filter-btn" id="typeFilterBtn" onclick="toggleTypePanel(event)">
+        <span id="typeFilterLabel">All word types</span>
+        <svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="currentColor" opacity="0.6"/></svg>
+      </button>
+      <div class="type-filter-panel" id="typeFilterPanel">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
     <select id="filterLevel" onchange="renderTable()">
       <option value="">All levels</option>
       <option value="L1">Level 1</option>
@@ -1690,6 +1852,8 @@
   <button class="tab-btn" onclick="switchTab('grammar')">📐 Grammar Tables</button>
   <button class="tab-btn" onclick="switchTab('resources')">📎 Resources</button>
 </div>
+
+<div class="active-filters" id="activeFilters"></div>
 
 <main>
 <div id="vocabPanel" class="tab-panel">
@@ -1801,7 +1965,7 @@
         <p class="gram-note">Nom. &amp; acc. always identical in neuters. Nom. pl. always -a.</p>
       </div>
 
-      <div class="gram-table-wrap" data-ce-min="2">
+      <div class="gram-table-wrap wide" data-ce-min="2">
         <h4>3rd Declension <em style="font-size:0.8rem;color:var(--ink-faint)">(rex, regis m · miles, militis m · corpus, corporis n)</em></h4>
         <table class="gram-table">
           <thead><tr><th>Case</th><th>Sg. (m/f)</th><th>Pl. (m/f)</th><th>Sg. (n)</th><th>Pl. (n)</th></tr></thead>
@@ -1856,7 +2020,7 @@
     <div class="gram-section-title">Adjectives <span>2-1-2 and 3rd declension</span></div>
     <div class="gram-grid">
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap wide">
         <h4>2-1-2 Adjective <em style="font-size:0.8rem;color:var(--ink-faint)">(bonus, bona, bonum)</em></h4>
         <table class="gram-table">
           <thead><tr><th>Case</th><th>M sg</th><th>F sg</th><th>N sg</th><th>M pl</th><th>F pl</th><th>N pl</th></tr></thead>
@@ -1872,7 +2036,7 @@
         <p class="gram-note">M follows 2nd decl. masc.; F follows 1st decl.; N follows 2nd decl. neuter.</p>
       </div>
 
-      <div class="gram-table-wrap" data-ce-min="2">
+      <div class="gram-table-wrap wide" data-ce-min="2">
         <h4>3rd Declension Adjective <em style="font-size:0.8rem;color:var(--ink-faint)">(fortis, forte · ingens, ingentis)</em></h4>
         <table class="gram-table">
           <thead><tr><th>Case</th><th>M/F sg</th><th>N sg</th><th>M/F pl</th><th>N pl</th></tr></thead>
@@ -1888,7 +2052,7 @@
         <p class="gram-note">ingens (one ending): nom. sg. ingens, gen. ingentis — same endings from gen. onward.</p>
       </div>
 
-      <div class="gram-table-wrap" data-ce-min="2">
+      <div class="gram-table-wrap wide" data-ce-min="2">
         <h4>Comparison of Adjectives</h4>
         <table class="gram-table">
           <thead><tr><th>Positive</th><th>Comparative</th><th>Superlative</th></tr></thead>
@@ -1914,7 +2078,7 @@
     <div class="gram-section-title">Pronouns <span>CE prescribed forms</span></div>
     <div class="gram-grid">
 
-      <div class="gram-table-wrap" data-ce-min="2">
+      <div class="gram-table-wrap wide" data-ce-min="2">
         <h4>Personal Pronouns — ego / tu / nos / vos</h4>
         <table class="gram-table">
           <thead><tr><th>Case</th><th>I</th><th>you (sg.)</th><th>we</th><th>you (pl.)</th></tr></thead>
@@ -1928,7 +2092,7 @@
         </table>
       </div>
 
-      <div class="gram-table-wrap" data-ce-min="2">
+      <div class="gram-table-wrap wide" data-ce-min="2">
         <h4>is, ea, id — he / she / it / they</h4>
         <table class="gram-table">
           <thead><tr><th>Case</th><th>M sg</th><th>F sg</th><th>N sg</th><th>M pl</th><th>F pl</th><th>N pl</th></tr></thead>
@@ -1942,7 +2106,7 @@
         </table>
       </div>
 
-      <div class="gram-table-wrap" data-ce-min="3">
+      <div class="gram-table-wrap wide" data-ce-min="3">
         <h4>hic / ille / ipse / idem</h4>
         <table class="gram-table">
           <thead><tr><th>Case</th><th colspan="3" class="c">hic, haec, hoc (this)</th><th colspan="3" class="c">ille, illa, illud (that)</th></tr>
@@ -1962,7 +2126,7 @@
         </table>
       </div>
 
-      <div class="gram-table-wrap" data-ce-min="3">
+      <div class="gram-table-wrap wide" data-ce-min="3">
         <h4>Reflexive — se &nbsp;·&nbsp; Relative — qui, quae, quod</h4>
         <table class="gram-table">
           <thead><tr><th>Case</th><th colspan="3" class="c">qui / quae / quod (who, which)</th></tr>
@@ -1993,7 +2157,7 @@
     <div class="gram-section-title">Verb Conjugations <span>active voice — all CE tenses</span></div>
     <div class="gram-grid">
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap wide">
         <h4>Present tense — all conjugations</h4>
         <table class="gram-table">
           <thead><tr><th></th><th class="c">1st<br><em style="font-weight:400;font-style:italic">amo</em></th><th class="c">2nd<br><em style="font-weight:400;font-style:italic">moneo</em></th><th class="c">3rd<br><em style="font-weight:400;font-style:italic">rego</em></th><th class="c">4th<br><em style="font-weight:400;font-style:italic">audio</em></th><th class="c">Mixed<br><em style="font-weight:400;font-style:italic">capio</em></th></tr></thead>
@@ -2008,7 +2172,7 @@
         </table>
       </div>
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap wide">
         <h4>Imperfect tense <em style="font-size:0.8rem;color:var(--ink-faint)">(was —ing / used to —)</em></h4>
         <table class="gram-table">
           <thead><tr><th></th><th class="c">1st</th><th class="c">2nd</th><th class="c">3rd</th><th class="c">4th</th><th class="c">Mixed</th></tr></thead>
@@ -2040,7 +2204,7 @@
         <p class="gram-note">Perfect stem = 3rd principal part (amaVI → amav-). Endings are the same for ALL conjugations.</p>
       </div>
 
-      <div class="gram-table-wrap" data-ce-min="2">
+      <div class="gram-table-wrap wide" data-ce-min="2">
         <h4>Future tense <em style="font-size:0.8rem;color:var(--ink-faint)">(will —)</em></h4>
         <table class="gram-table">
           <thead><tr><th></th><th class="c">1st &amp; 2nd</th><th class="c">3rd, 4th &amp; Mixed</th></tr></thead>
@@ -2095,7 +2259,7 @@
     <div class="gram-section-title">Irregular Verbs <span>sum, possum, eo, fero, volo, nolo</span></div>
     <div class="gram-grid">
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap wide">
         <h4>sum — I am</h4>
         <table class="gram-table">
           <thead><tr><th></th><th class="c">Present</th><th class="c">Imperfect</th><th class="c">Future</th><th class="c">Perfect</th></tr></thead>
@@ -2110,7 +2274,7 @@
         </table>
       </div>
 
-      <div class="gram-table-wrap" data-ce-min="2">
+      <div class="gram-table-wrap wide" data-ce-min="2">
         <h4>possum — I am able</h4>
         <table class="gram-table">
           <thead><tr><th></th><th class="c">Present</th><th class="c">Imperfect</th><th class="c">Perfect</th></tr></thead>
@@ -2166,7 +2330,7 @@
     <div class="gram-section-title">Prepositions <span>with the case they require</span></div>
     <div class="gram-grid">
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap wide">
         <h4>+ Accusative <span class="acc">acc.</span></h4>
         <table class="gram-table">
           <thead><tr><th>Latin</th><th>English</th><th>Level</th></tr></thead>
@@ -2188,7 +2352,7 @@
         </table>
       </div>
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap wide">
         <h4>+ Ablative <span class="abl">abl.</span></h4>
         <table class="gram-table">
           <thead><tr><th>Latin</th><th>English</th><th>Level</th></tr></thead>
@@ -2206,7 +2370,7 @@
         <p class="gram-note"><strong>in</strong> and <strong>sub</strong> take accusative with motion verbs, ablative with position verbs.</p>
       </div>
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap wide">
         <h4>+ Dative <span class="dat">dat.</span> &nbsp; (verbs, not preps)</h4>
         <table class="gram-table">
           <thead><tr><th>Latin verb</th><th>English</th><th>Note</th></tr></thead>
@@ -2230,7 +2394,7 @@
     <div class="gram-section-title">Key Syntax <span>clauses, constructions &amp; useful rules</span></div>
     <div class="gram-grid">
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap wide">
         <h4>Conjunctions &amp; their clauses</h4>
         <table class="gram-table">
           <thead><tr><th>Latin</th><th>English</th><th>Level</th></tr></thead>
@@ -2249,7 +2413,7 @@
         </table>
       </div>
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap wide">
         <h4>Cases &amp; their uses</h4>
         <table class="gram-table">
           <thead><tr><th>Case</th><th>Main uses</th></tr></thead>
@@ -2264,7 +2428,7 @@
         </table>
       </div>
 
-      <div class="gram-table-wrap">
+      <div class="gram-table-wrap wide">
         <h4>Infinitives &amp; Imperatives</h4>
         <table class="gram-table">
           <thead><tr><th></th><th class="c">1st</th><th class="c">2nd</th><th class="c">3rd</th><th class="c">4th</th></tr></thead>
@@ -2791,55 +2955,251 @@ function sortBy(key) {
   renderTable();
 }
 
-// ── SUB-FILTER OPTIONS ──
-const subFilters = {
-  noun: [
-    {label:"1st decl. feminine (noun 1f)", value:"noun 1f"},
-    {label:"1st decl. masculine (noun 1m)", value:"noun 1m"},
-    {label:"1st decl. m/f (noun 1m/f)", value:"noun 1m/f"},
-    {label:"2nd decl. masculine (noun 2m)", value:"noun 2m"},
-    {label:"2nd decl. neuter (noun 2n)", value:"noun 2n"},
-    {label:"3rd decl. masculine (noun 3m)", value:"noun 3m"},
-    {label:"3rd decl. feminine (noun 3f)", value:"noun 3f"},
-    {label:"3rd decl. neuter (noun 3n)", value:"noun 3n"},
-    {label:"3rd decl. m/f (noun 3m/f)", value:"noun 3m/f"},
-    {label:"4th declension (noun 4m)", value:"noun 4"},
-    {label:"5th declension (noun 5f/m)", value:"noun 5"},
-    {label:"Irregular nouns", value:"noun irregular"},
-  ],
-  verb: [
-    {label:"1st conjugation (verb 1)", value:"verb 1"},
-    {label:"2nd conjugation (verb 2)", value:"verb 2"},
-    {label:"3rd conjugation (verb 3)", value:"verb 3"},
-    {label:"4th conjugation (verb 4)", value:"verb 4"},
-    {label:"Mixed / 5th conjugation (verb 5)", value:"verb 5"},
-    {label:"Irregular verbs", value:"verb irregular"},
-  ],
-  adjective: [
-    {label:"2-1-2 declension", value:"adjective 2-1-2"},
-    {label:"3rd declension", value:"adjective 3"},
-  ],
-};
+// ── MULTI-SELECT TYPE FILTER ──────────────────────────────────
 
-function updateSubFilter() {
-  const ft = document.getElementById('filterType').value;
-  const sub = document.getElementById('filterSub');
-  const opts = subFilters[ft];
-  if (opts) {
-    sub.innerHTML = '<option value="">All subtypes</option>' +
-      opts.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
-    sub.style.display = '';
+const TYPE_GROUPS = [
+  {
+    id: 'noun', label: 'Nouns',
+    items: [
+      { label: '1st decl. feminine',      value: 'noun 1f'    },
+      { label: '1st decl. masculine',     value: 'noun 1m'    },
+      { label: '1st decl. m/f',           value: 'noun 1m/f'  },
+      { label: '2nd decl. masculine',     value: 'noun 2m'    },
+      { label: '2nd decl. neuter',        value: 'noun 2n'    },
+      { label: '3rd decl. masculine',     value: 'noun 3m'    },
+      { label: '3rd decl. feminine',      value: 'noun 3f'    },
+      { label: '3rd decl. neuter',        value: 'noun 3n'    },
+      { label: '3rd decl. m/f',           value: 'noun 3m/f'  },
+      { label: '4th declension',          value: 'noun 4m'    },
+      { label: '5th declension',          value: 'noun 5f'    },
+      { label: 'Irregular',               value: 'noun irregular' },
+    ]
+  },
+  {
+    id: 'verb', label: 'Verbs',
+    items: [
+      { label: '1st conjugation',         value: 'verb 1'         },
+      { label: '2nd conjugation',         value: 'verb 2'         },
+      { label: '3rd conjugation',         value: 'verb 3'         },
+      { label: '4th conjugation',         value: 'verb 4'         },
+      { label: 'Mixed / 5th conj.',       value: 'verb 5'         },
+      { label: 'Irregular',               value: 'verb irregular' },
+    ]
+  },
+  {
+    id: 'adjective', label: 'Adjectives',
+    items: [
+      { label: '2-1-2 declension',        value: 'adjective 2-1-2' },
+      { label: '3rd declension',          value: 'adjective 3'     },
+    ]
+  },
+  {
+    id: 'adverb',       label: 'Adverbs',       items: [{ label: 'Adverbs', value: 'adverb' }]
+  },
+  {
+    id: 'preposition',  label: 'Prepositions',  items: [{ label: 'Prepositions', value: 'preposition' }]
+  },
+  {
+    id: 'conjunction',  label: 'Conjunctions',  items: [{ label: 'Conjunctions', value: 'conjunction' }]
+  },
+  {
+    id: 'pronoun',      label: 'Pronouns',      items: [{ label: 'Pronouns', value: 'pronoun' }]
+  },
+  {
+    id: 'cardinal',     label: 'Numbers',       items: [{ label: 'Numbers', value: 'cardinal' }]
+  },
+  {
+    id: 'question word',label: 'Question words',items: [{ label: 'Question words', value: 'question word' }]
+  },
+];
+
+// Set of currently selected type values (empty = show all)
+let selectedTypes = new Set();
+
+function buildTypePanel() {
+  const panel = document.getElementById('typeFilterPanel');
+  if (!panel) return;
+
+  let html = `<div class="tf-clear-row">
+    <button class="tf-clear-btn" onclick="clearTypeFilter()">Clear all</button>
+  </div>`;
+
+  TYPE_GROUPS.forEach(group => {
+    const hasSubtypes = group.items.length > 1;
+    const groupVals = group.items.map(i => i.value);
+    const allChecked = groupVals.every(v => selectedTypes.has(v));
+    const someChecked = groupVals.some(v => selectedTypes.has(v));
+
+    html += `<div class="tf-group">`;
+
+    if (hasSubtypes) {
+      // Group header with its own "select all" checkbox
+      html += `<div class="tf-group-header" onclick="toggleGroup('${group.id}', event)">
+        <input type="checkbox" id="tg_${group.id}"
+          ${allChecked ? 'checked' : ''}
+          ${someChecked && !allChecked ? 'indeterminate-mark="1"' : ''}
+          onclick="toggleGroup('${group.id}', event); event.stopPropagation()">
+        <label for="tg_${group.id}">${group.label}</label>
+        <span class="tf-all-badge">select all</span>
+      </div>`;
+      group.items.forEach(item => {
+        const chk = selectedTypes.has(item.value) ? 'checked' : '';
+        html += `<div class="tf-item" onclick="toggleType('${item.value}', event)">
+          <input type="checkbox" id="ti_${item.value.replace(/\s/g,'_')}" ${chk}
+            onclick="toggleType('${item.value}', event); event.stopPropagation()">
+          <label for="ti_${item.value.replace(/\s/g,'_')}">${item.label}</label>
+        </div>`;
+      });
+    } else {
+      // Single-item group — just one checkbox row
+      const item = group.items[0];
+      const chk = selectedTypes.has(item.value) ? 'checked' : '';
+      html += `<div class="tf-group-header" onclick="toggleType('${item.value}', event)">
+        <input type="checkbox" id="tg_${group.id}" ${chk}
+          onclick="toggleType('${item.value}', event); event.stopPropagation()">
+        <label for="tg_${group.id}">${group.label}</label>
+      </div>`;
+    }
+
+    html += `</div>`;
+  });
+
+  panel.innerHTML = html;
+
+  // Set indeterminate state on group checkboxes
+  TYPE_GROUPS.forEach(group => {
+    if (group.items.length > 1) {
+      const cb = document.getElementById('tg_' + group.id);
+      if (cb) {
+        const vals = group.items.map(i => i.value);
+        const some = vals.some(v => selectedTypes.has(v));
+        const all  = vals.every(v => selectedTypes.has(v));
+        cb.indeterminate = some && !all;
+        cb.checked = all;
+      }
+    }
+  });
+}
+
+function toggleTypePanel(e) {
+  e.stopPropagation();
+  const panel = document.getElementById('typeFilterPanel');
+  const btn   = document.getElementById('typeFilterBtn');
+  const open  = panel.classList.toggle('open');
+  btn.classList.toggle('active', open);
+  if (open) buildTypePanel();
+}
+
+function toggleType(value, e) {
+  if (e) e.stopPropagation();
+  if (selectedTypes.has(value)) {
+    selectedTypes.delete(value);
   } else {
-    sub.style.display = 'none';
-    sub.value = '';
+    selectedTypes.add(value);
+  }
+  buildTypePanel();
+  updateTypeLabel();
+  renderTable();
+}
+
+function toggleGroup(groupId, e) {
+  if (e) e.stopPropagation();
+  const group = TYPE_GROUPS.find(g => g.id === groupId);
+  if (!group) return;
+  const vals = group.items.map(i => i.value);
+  const allOn = vals.every(v => selectedTypes.has(v));
+  if (allOn) {
+    vals.forEach(v => selectedTypes.delete(v));
+  } else {
+    vals.forEach(v => selectedTypes.add(v));
+  }
+  buildTypePanel();
+  updateTypeLabel();
+  renderTable();
+}
+
+function clearTypeFilter() {
+  selectedTypes.clear();
+  buildTypePanel();
+  updateTypeLabel();
+  renderTable();
+}
+
+function updateTypeLabel() {
+  const btn = document.getElementById('typeFilterLabel');
+  if (!btn) return;
+  const n = selectedTypes.size;
+  if (n === 0) {
+    btn.textContent = 'All word types';
+  } else if (n === 1) {
+    // Find label for the one selected value
+    for (const g of TYPE_GROUPS) {
+      const item = g.items.find(i => selectedTypes.has(i.value));
+      if (item) { btn.textContent = item.label; break; }
+    }
+  } else {
+    btn.textContent = `${n} types selected`;
+  }
+
+  // Update active-filters chips
+  const chipArea = document.getElementById('activeFilters');
+  if (!chipArea) return;
+  if (n === 0) {
+    chipArea.innerHTML = '';
+    return;
+  }
+
+  // Group chips: if all subtypes of a group are selected, show one chip for the group
+  const chips = [];
+  TYPE_GROUPS.forEach(group => {
+    const vals = group.items.map(i => i.value);
+    const selVals = vals.filter(v => selectedTypes.has(v));
+    if (selVals.length === 0) return;
+
+    if (selVals.length === vals.length || vals.length === 1) {
+      // Whole group selected — one chip
+      chips.push({ label: group.label, clear: () => vals.forEach(v => selectedTypes.delete(v)) });
+    } else {
+      // Individual subtypes
+      group.items.filter(i => selectedTypes.has(i.value)).forEach(item => {
+        chips.push({ label: item.label, clear: () => selectedTypes.delete(item.value) });
+      });
+    }
+  });
+
+  chipArea.innerHTML = chips.map((ch, i) =>
+    `<span class="af-chip">${esc(ch.label)}
+      <button onclick="removeChip(${i})" title="Remove">×</button>
+    </span>`
+  ).join('');
+  // Store chip clear functions
+  window._chipClears = chips.map(ch => ch.clear);
+}
+
+function removeChip(i) {
+  if (window._chipClears && window._chipClears[i]) {
+    window._chipClears[i]();
+    buildTypePanel();
+    updateTypeLabel();
+    renderTable();
   }
 }
 
+// Close panel when clicking outside
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('typeFilterWrap');
+  const panel = document.getElementById('typeFilterPanel');
+  const btn   = document.getElementById('typeFilterBtn');
+  if (wrap && !wrap.contains(e.target)) {
+    panel && panel.classList.remove('open');
+    btn && btn.classList.remove('active');
+  }
+});
+
+
 // ── FILTER & RENDER ──
 function renderTable() {
-  const q = document.getElementById('searchInput').value.toLowerCase();
-  const ft = document.getElementById('filterType').value.toLowerCase();
-  const fsub = document.getElementById('filterSub').value.toLowerCase();
+  const q  = document.getElementById('searchInput').value.toLowerCase();
   const fl = document.getElementById('filterLevel').value;
 
   let rows = vocab.filter((w) => {
@@ -2847,14 +3207,18 @@ function renderTable() {
       w.latin.toLowerCase().includes(q) ||
       w.english.toLowerCase().includes(q) ||
       w.info.toLowerCase().includes(q);
-    const wtype = w.type.toLowerCase();
-    const matchType = !ft || wtype.includes(ft);
-    const matchSub = !fsub || wtype === fsub || wtype.includes(fsub);
+
+    // Multi-select type filter: if nothing selected, show all
+    const wtype = w.type.toLowerCase().trim();
+    const matchType = selectedTypes.size === 0 ||
+      [...selectedTypes].some(sel => wtype === sel || wtype.startsWith(sel + ' ') || wtype.startsWith(sel));
+
     const ceLevel = window._ceLevel || 3;
     const levelNum = {'L1':1,'L2':2,'L3':3}[w.level] || 1;
     const matchCE = levelNum <= ceLevel;
     const matchLevel = (!fl || w.level === fl) && matchCE;
-    return matchSearch && matchType && matchSub && matchLevel;
+
+    return matchSearch && matchType && matchLevel;
   });
 
   // sort
