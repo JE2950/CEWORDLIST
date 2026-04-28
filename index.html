@@ -1848,6 +1848,7 @@
       <option value="L3">Level 3</option>
     </select>
     <div class="stat-pill" id="statPill"></div>
+    <button id="ppToggleBtn" onclick="togglePrincipalParts()" title="Show/hide principal parts column" style="padding:4px 10px;font-size:0.78rem;background:var(--tag-bg);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--ink-light);font-family:inherit;white-space:nowrap;">𝑃 Principal parts: on</button>
   </div>
 </header>
 
@@ -1901,7 +1902,7 @@
       <thead>
         <tr>
           <th onclick="sortBy('latin')" id="th-latin">Latin <span class="sort-icon">↕</span></th>
-          <th onclick="sortBy('info')" id="th-info" class="pp-col">Principal Parts <button id="ppToggleBtn" onclick="togglePrincipalParts(event)" title="Show/hide principal parts" style="margin-left:6px;padding:1px 7px;font-size:0.7rem;background:var(--tag-bg);border:1px solid var(--border);border-radius:3px;cursor:pointer;color:var(--ink-light);font-family:inherit;vertical-align:middle;line-height:1.4;">hide</button> <span class="sort-icon">↕</span></th>
+          <th onclick="sortBy('info')" id="th-info" class="pp-col">Principal Parts <span class="sort-icon">↕</span></th>
           <th onclick="sortBy('english')" id="th-english">English <span class="sort-icon">↕</span></th>
           <th onclick="sortBy('type')" id="th-type">Type <span class="sort-icon">↕</span></th>
           <th onclick="sortBy('level')" id="th-level">Level <span class="sort-icon">↕</span></th>
@@ -3692,12 +3693,10 @@ function togglePrincipalParts(e) {
   const btn = document.getElementById('ppToggleBtn');
   if (ppVisible) {
     table.classList.remove('pp-hidden');
-    btn.textContent = 'hide';
-    btn.title = 'Hide principal parts column';
+    btn.textContent = '𝑃 Principal parts: on';
   } else {
     table.classList.add('pp-hidden');
-    btn.textContent = 'show';
-    btn.title = 'Show principal parts column';
+    btn.textContent = '𝑃 Principal parts: off';
   }
 }
 </script>
