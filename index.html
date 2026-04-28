@@ -1373,11 +1373,14 @@
   /* Table wrap: add a subtle card background and breathing room */
   .gram-table-wrap {
     min-width: 0;
+    overflow-x: auto;          /* scroll rather than overflow the card */
+    overflow-y: visible;
     background: rgba(255,252,245,0.6);
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 16px 18px 18px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    box-sizing: border-box;
   }
   .gram-table-wrap h4 {
     font-family: 'IM Fell English', serif; font-size: 0.98rem;
@@ -1390,39 +1393,47 @@
     width: 100%; border-collapse: collapse;
     background: transparent;
     border: none;
-    font-size: 0.88rem;
+    font-size: 0.97rem;          /* up from 0.88 — easier to read */
+    line-height: 1.6;
   }
   .gram-table thead tr { background: var(--ink-light); }
   .gram-table thead th {
-    color: var(--parchment); padding: 8px 12px;
+    color: var(--parchment); padding: 9px 14px;
     font-family: 'IM Fell English', serif; font-weight: 400;
-    font-size: 0.8rem; letter-spacing: 0.04em; text-align: left;
+    font-size: 0.85rem; letter-spacing: 0.04em; text-align: left;
+    white-space: nowrap;
   }
   .gram-table thead th.c { text-align: center; }
   .gram-table tbody tr:nth-child(even) { background: rgba(196,168,130,0.1); }
   .gram-table tbody tr:hover { background: rgba(184,134,11,0.08); }
   .gram-table td {
-    padding: 7px 12px; border-bottom: 1px solid rgba(196,168,130,0.25);
-    vertical-align: middle; line-height: 1.5;
+    padding: 8px 14px; border-bottom: 1px solid rgba(196,168,130,0.25);
+    vertical-align: middle; line-height: 1.6;
+    white-space: nowrap;        /* prevent cell text from wrapping mid-form */
   }
+  .gram-table td.wrap { white-space: normal; }  /* override for notes/long cells */
   .gram-table tbody tr:last-child td { border-bottom: none; }
   .gram-table td.lbl {
-    font-family:'IM Fell English',serif; font-size:0.85rem;
+    font-family:'IM Fell English',serif; font-size:0.9rem;
     color:var(--ink-faint); white-space:nowrap; font-style:italic;
-    padding-right: 16px;
+    padding-right: 18px; min-width: 60px;
   }
-  .gram-table td.lat { font-family:'IM Fell English',serif; font-size:0.92rem; }
+  .gram-table td.lat {
+    font-family:'IM Fell English',serif; font-size:1rem;
+    color: var(--ink);
+  }
   .gram-table td.c   { text-align:center; }
-  .gram-table td.nt  { font-size:0.8rem; color:var(--ink-faint); font-style:italic; }
+  .gram-table td.nt  { font-size:0.85rem; color:var(--ink-faint); font-style:italic; white-space:normal; }
   .gram-table tr.sub td {
-    background: rgba(196,168,130,0.15); font-size:0.75rem;
+    background: rgba(196,168,130,0.15); font-size:0.78rem;
     letter-spacing:0.06em; text-transform:uppercase;
-    color:var(--ink-faint); padding:3px 10px;
+    color:var(--ink-faint); padding:4px 12px;
   }
   .gram-note {
-    font-size:0.82rem; color:var(--ink-faint); font-style:italic;
-    margin-top: 10px; line-height: 1.5; padding-top: 6px;
+    font-size:0.88rem; color:var(--ink-faint); font-style:italic;
+    margin-top: 12px; line-height: 1.6; padding-top: 8px;
     border-top: 1px solid rgba(196,168,130,0.2);
+    white-space: normal;
   }
 
   /* Wide tables (3+ data columns) should span full row */
@@ -1430,16 +1441,20 @@
 
   /* Responsive breakpoints for grammar grid */
   @media (max-width: 900px) {
-    .gram-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .gram-grid { grid-template-columns: 1fr; gap: 20px; }
     #grammarPanel { padding: 20px 18px 60px; }
+    .gram-table-wrap.wide { grid-column: auto; }
   }
   @media (max-width: 600px) {
-    .gram-grid { grid-template-columns: 1fr; gap: 16px; }
-    #grammarPanel { padding: 16px 12px 48px; }
-    .gram-table-wrap { padding: 12px 14px 14px; }
-    .gram-table td { padding: 6px 8px; }
-    .gram-table thead th { padding: 7px 8px; }
-    .gram-section { margin-bottom: 36px; }
+    .gram-grid { grid-template-columns: 1fr; gap: 14px; }
+    #grammarPanel { padding: 14px 10px 48px; }
+    .gram-table-wrap { padding: 10px 10px 12px; }
+    .gram-table { font-size: 0.88rem; }
+    .gram-table td { padding: 6px 8px; white-space: nowrap; }
+    .gram-table thead th { padding: 7px 8px; font-size: 0.78rem; white-space: nowrap; }
+    .gram-table td.lbl { padding-right: 10px; font-size: 0.82rem; }
+    .gram-section { margin-bottom: 28px; }
+    .gram-section-title { font-size: 1.1rem; }
   }
   .acc  { display:inline-block;padding:1px 7px;border-radius:10px;font-size:0.76rem;background:rgba(26,75,139,0.1);color:var(--l2);border:1px solid rgba(26,75,139,0.2); }
   .abl  { display:inline-block;padding:1px 7px;border-radius:10px;font-size:0.76rem;background:rgba(122,26,26,0.1);color:var(--l3);border:1px solid rgba(122,26,26,0.2); }
@@ -2502,7 +2517,7 @@
 
 <script>
 // ── PASSWORD (change here) ──
-const ADMIN_PW = "classics";
+const ADMIN_PW = "ClassicsJE2026";
 
 // ── ANTHROPIC API — proxied server-side, no key needed here ──
 
