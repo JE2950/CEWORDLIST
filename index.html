@@ -244,6 +244,11 @@
     min-width: 160px;
   }
 
+  .pp-hidden .pp-col,
+  .pp-hidden .td-info {
+    display: none;
+  }
+
   .td-english {
     color: var(--ink);
     font-weight: 500;
@@ -1812,7 +1817,6 @@
       <div class="subtitle">Mr J Easton &mdash; Common Entrance Reference &mdash; Levels 1–3</div>
     </div>
     <div class="header-actions">
-      <button class="admin-btn translate-btn" onclick="openTranslator()">⟴ Help me translate…</button>
       <button class="admin-btn" onclick="switchTab('resources')">📎 Resources</button>
       <button class="admin-btn" id="adminToggle" onclick="promptAdmin()">✎ Edit</button>
     </div>
@@ -1897,7 +1901,7 @@
       <thead>
         <tr>
           <th onclick="sortBy('latin')" id="th-latin">Latin <span class="sort-icon">↕</span></th>
-          <th onclick="sortBy('info')" id="th-info">Principal Parts <span class="sort-icon">↕</span></th>
+          <th onclick="sortBy('info')" id="th-info" class="pp-col">Principal Parts <button id="ppToggleBtn" onclick="togglePrincipalParts(event)" title="Show/hide principal parts" style="margin-left:6px;padding:1px 7px;font-size:0.7rem;background:var(--tag-bg);border:1px solid var(--border);border-radius:3px;cursor:pointer;color:var(--ink-light);font-family:inherit;vertical-align:middle;line-height:1.4;">hide</button> <span class="sort-icon">↕</span></th>
           <th onclick="sortBy('english')" id="th-english">English <span class="sort-icon">↕</span></th>
           <th onclick="sortBy('type')" id="th-type">Type <span class="sort-icon">↕</span></th>
           <th onclick="sortBy('level')" id="th-level">Level <span class="sort-icon">↕</span></th>
@@ -2586,6 +2590,7 @@ let vocab = [
   {latin:"dico",info:"dicere, dixi, dictus",english:"I say",type:"verb 3",level:"L1"},
   {latin:"dies",info:"diei",english:"day",type:"noun 5m",level:"L3"},
   {latin:"difficilis",info:"difficile",english:"difficult",type:"adjective 3rd",level:"L2"},
+  {latin:"discipulus",info:"discipuli",english:"pupil",type:"noun 2m",level:"L1"},
   {latin:"discedo",info:"discedere, discessi",english:"I depart",type:"verb 3",level:"L1"},
   {latin:"diu",info:"",english:"for a long time",type:"adverb",level:"L1"},
   {latin:"do",info:"dare, dedi, datus",english:"I give",type:"verb 1",level:"L1"},
@@ -2622,6 +2627,7 @@ let vocab = [
   {latin:"fides",info:"fidei",english:"faith",type:"noun 5f",level:"L3"},
   {latin:"filia",info:"filiae",english:"daughter",type:"noun 1f",level:"L1"},
   {latin:"filius",info:"filii",english:"son",type:"noun 2m",level:"L1"},
+  {latin:"fleo",info:"flere, flevi",english:"I weep, cry",type:"verb 2",level:"L3"},
   {latin:"flumen",info:"fluminis",english:"river",type:"noun 3n",level:"L2"},
   {latin:"forte",info:"",english:"by chance",type:"adverb",level:"L2"},
   {latin:"fortis",info:"forte",english:"brave, strong",type:"adjective 3rd",level:"L2"},
@@ -3676,6 +3682,24 @@ document.addEventListener('DOMContentLoaded', function() {
   setCELevel(1);
 });
 
+
+// ── PRINCIPAL PARTS TOGGLE ──
+let ppVisible = true;
+function togglePrincipalParts(e) {
+  if (e) e.stopPropagation();
+  ppVisible = !ppVisible;
+  const table = document.getElementById('vocabTable');
+  const btn = document.getElementById('ppToggleBtn');
+  if (ppVisible) {
+    table.classList.remove('pp-hidden');
+    btn.textContent = 'hide';
+    btn.title = 'Hide principal parts column';
+  } else {
+    table.classList.add('pp-hidden');
+    btn.textContent = 'show';
+    btn.title = 'Show principal parts column';
+  }
+}
 </script>
 </body>
 </html>
